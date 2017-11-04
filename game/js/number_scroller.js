@@ -4,7 +4,9 @@ class NumberScroller {
 
         this.style = null;
 
-        this.seed = 0;
+        this.seed = 30;
+
+        this.speed = 1;
         
         this.numberCount = numberCount || 10;
         this.numbers = [];
@@ -20,7 +22,7 @@ class NumberScroller {
         for(let i = 0; i < this.numberCount; i++) {
             let number = new PIXI.Text('', this.style);
             
-            number.x = 300;
+            number.x = windowWidth / 2;
             number.y = i * 36;
             this.numbers.push(number);
         }
@@ -30,8 +32,22 @@ class NumberScroller {
         }
     }
 
+    update(delta) {
+        if (!this.seed) return;
+
+        this.speed += delta;
+
+    }
+
     setSeed(number) {
         this.seed = number;
+        this.rand = new Random(number);
+        
+        for(let i = 0; i < this.numbers.length; i++) {
+            let number = this.numbers[i];
+
+            number.text = this.rand.nextBinary();
+        }
     }
 
     remove() {

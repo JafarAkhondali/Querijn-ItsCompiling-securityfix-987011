@@ -32,6 +32,8 @@ let healthBarRight = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rec
 let computerLeft = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu1_main.x, s_cpu1_main.y, s_cpu1_main.width, s_cpu1_main.height)));
 let computerRight = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu2_main.x, s_cpu2_main.y, s_cpu2_main.width, s_cpu2_main.height)));
 
+let lobbyTitle = null;
+
 let getNerfDart = function() { return PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_nerf_dart.x, s_nerf_dart.y, s_nerf_dart.width, s_nerf_dart.height))); };
 let dartsLeft = [];
 let dartsRight = [];
@@ -66,65 +68,117 @@ function preload() {
 
 function init() {
     window.onresize();
+    document.getElementById("game").appendChild(app.view);
 
     gameConnection = new GameClient("ws://localhost:1345");
 
     // On Lobby Join
-    let hasReceivedInviteCode = gameConnection.addTalkBox(1, function (msg) { 
-        console.log(`Received invite code ${msg}, confirming receiving it`);
-        inviteCode = msg;
-        hasReceivedInviteCode(msg);
-    })
+    let hasReceivedInviteCode = gameConnection.addTalkBox(1, function (suggestedCode) { 
+        console.log(`Received invite code ${suggestedCode}, confirming receiving it.`);
+        inviteCode = suggestedCode;
+        hasReceivedInviteCode(suggestedCode);
+
+        lobbyTitle.text = 'We are connected to the server!\n\nGot a friend?\nSend them your URL to play with them!';
+        lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
+
+        window.history.pushState(suggestedCode, suggestedCode, `?i=${suggestedCode}`);
+    });
+
+    showSharedAssets();
+    showLobby();
 
     // On Game Join
-    //let hasJoined = gameConnection.addTalkBox(2, function (game) { 
+    let hasJoined = gameConnection.addTalkBox(2, function (game) { 
         console.log(`Received a game join! Playing against ${game.opponent} with seed ${game.seed}`);
-     
-        background.x = 0;
-        background.y = windowHeight - s_bg.height;
-        app.stage.addChild(background);
 
-        healthBorderLeft.x = 20;
-        healthBorderLeft.y = 20;
-        app.stage.addChild(healthBorderLeft);
+        hideLobby();
+        showGame();
 
-        healthBorderRight.x = windowWidth - s_healthborder.width - 20;
-        healthBorderRight.y = 20;
-        app.stage.addChild(healthBorderRight);
+        hasJoined(game.opponent);
+    });
 
-        healthBarLeft.x = 80;
-        healthBarLeft.y = healthBorderLeft.y + s_healthborder.height / 2 - s_healthbar.height / 2;
-        app.stage.addChild(healthBarLeft);
+}
 
-        healthBarRight.x = windowWidth - 80;
-        healthBarRight.y = healthBorderRight.y + s_healthborder.height / 2 - s_healthbar.height / 2;
-        healthBarRight.scale.x = -1;        
-        app.stage.addChild(healthBarRight);
-        
-        for (let i = 0; i < dartComboCount; i++) {
-            dartsLeft[i].x = (i + 0.5) * (10 + s_nerf_dart.width);
-            dartsLeft[i].y = 100;
-            dartsLeft[i].alpha = 0.5;
-            app.stage.addChild(dartsLeft[i]);
+function showSharedAssets() {
+    
+    background.x = 0;
+    background.y = windowHeight - s_bg.height;
+    app.stage.addChild(background);
+    
+    computerLeft.x = 20;
+    computerLeft.y = 320;
+    app.stage.addChild(computerLeft);
+    
+    computerRight.x = windowWidth - s_cpu2_main.width - 20;
+    computerRight.y = 320;
+    app.stage.addChild(computerRight);
+}
 
-            dartsRight[i].x = windowWidth - ((dartComboCount - i) + 0.5) * (10 + s_nerf_dart.width);
-            dartsRight[i].y = 100;
-            dartsRight[i].alpha = 0.5;
-            app.stage.addChild(dartsRight[i]);
-        }
+function showLobby() {
+    let style = new PIXI.TextStyle({
+        fontFamily: 'xkcd-script',
+        fontSize: 52,
+        fill: '#000',
+        align: "center"
+    });
+    
+    lobbyTitle = new PIXI.Text('Waiting for a connection..', style);
+    lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
+    lobbyTitle.y = 50;
+    app.stage.addChild(lobbyTitle);
+}
 
-        computerLeft.x = 20;
-        computerLeft.y = 320;
-        app.stage.addChild(computerLeft);
-        
-        computerRight.x = windowWidth - s_cpu2_main.width - 20;
-        computerRight.y = 320;
-        app.stage.addChild(computerRight);
+function hideLobby() {
+    app.stage.removeChild(lobbyTitle);
+}
 
-        document.getElementById("game").appendChild(app.view);
+function showGame() { 
 
-    //    hasJoined(game.opponent);
-    //});
+    healthBorderLeft.x = 20;
+    healthBorderLeft.y = 20;
+    app.stage.addChild(healthBorderLeft);
+
+    healthBorderRight.x = windowWidth - s_healthborder.width - 20;
+    healthBorderRight.y = 20;
+    app.stage.addChild(healthBorderRight);
+
+    healthBarLeft.x = 80;
+    healthBarLeft.y = healthBorderLeft.y + s_healthborder.height / 2 - s_healthbar.height / 2;
+    app.stage.addChild(healthBarLeft);
+
+    healthBarRight.x = windowWidth - 80;
+    healthBarRight.y = healthBorderRight.y + s_healthborder.height / 2 - s_healthbar.height / 2;
+    healthBarRight.scale.x = -1;        
+    app.stage.addChild(healthBarRight);
+    
+    for (let i = 0; i < dartComboCount; i++) {
+        dartsLeft[i].x = (i + 0.5) * (10 + s_nerf_dart.width);
+        dartsLeft[i].y = 100;
+        dartsLeft[i].alpha = 0.5;
+        app.stage.addChild(dartsLeft[i]);
+
+        dartsRight[i].x = windowWidth - ((dartComboCount - i) + 0.5) * (10 + s_nerf_dart.width);
+        dartsRight[i].y = 100;
+        dartsRight[i].alpha = 0.5;
+        app.stage.addChild(dartsRight[i]);
+    }
+    
+    app.ticker.add(numberScroller.update.bind(numberScroller));
+}
+
+function hideGame() {
+
+    app.stage.removeChild(healthBorderLeft);
+    app.stage.removeChild(healthBorderRight);
+    app.stage.removeChild(healthBarLeft); 
+    app.stage.removeChild(healthBarRight);
+    
+    for (let i = 0; i < dartComboCount; i++) {
+        app.stage.removeChild(dartsLeft[i]);
+        app.stage.removeChild(dartsRight[i]);
+    }
+    
+    app.ticker.remove(numberScroller.update.bind(numberScroller));
 }
 
 if (document.addEventListener)
