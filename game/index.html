@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>It's Compiling!</title>
+        <style>
+            @font-face {
+                font-family: xkcd-script;
+                src: url('media/xkcd-script.woff') format('woff'),
+                url('media/xkcd-script.tff') format('truetype');
+            }
+
+            *, body { 
+                margin: 0px;
+                padding: 0px;
+                font-family: xkcd-script;
+                text-align: center;
+            }
+            
+            canvas {
+                width: 100%;
+                max-width: 1920px;
+                max-height: 1080px;
+            }
+        </style>
+        <script src="js/pixi.min.js"></script>
+        <script src="js/assets.js"></script>
+        <script src="js/number_scroller.js"></script>
+        <script src="js/button.js"></script>
+        <script src="js/random.js"></script>
+        <script src="js/game.js"></script>
+    </head>
+    <body>
+        <div id="game"></div>
+        <br>
+        <br>
+        by Querijn Heijmans &amp; Cristian Pintos
+    </body>
+</html>
