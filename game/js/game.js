@@ -2,14 +2,18 @@
 let windowWidth = 1920;
 let windowHeight = 1080;
 
-let dartComboCount = 5;
-let numbersOnScreenCount = 5;
+let dartComboCount = 8;
+let numbersOnScreenCount = 8;
+let maxHealth = 64;
 
 let gameState = {
 
     reset: function() {
-        this.yourHealth = 100;
-        this.opponentHealth = 100;
+        this.yourHealth = maxHealth;
+        this.yourDarts = 0;
+
+        this.opponentHealth = maxHealth;
+        this.opponentDarts = 0;
     }
 }
 
@@ -28,6 +32,9 @@ let healthBorderLeft = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.R
 let healthBorderRight = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_healthborder.x, s_healthborder.y, s_healthborder.width, s_healthborder.height)));
 let healthBarLeft = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_healthbar.x, s_healthbar.y, s_healthbar.width, s_healthbar.height)));
 let healthBarRight = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_healthbar.x, s_healthbar.y, s_healthbar.width, s_healthbar.height)));
+
+let healthLeft = null;
+let healthRight = null;
 
 let computerLeft = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu1_main.x, s_cpu1_main.y, s_cpu1_main.width, s_cpu1_main.height)));
 let computerRight = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu2_main.x, s_cpu2_main.y, s_cpu2_main.width, s_cpu2_main.height)));
@@ -87,12 +94,15 @@ function init() {
     showSharedAssets();
     showLobby();
 
+    hideLobby();
+    showGame(5);
+
     // On Game Join
     let hasJoined = gameConnection.addTalkBox(2, function (game) { 
         console.log(`Received a game join! Playing against ${game.opponent} with seed ${game.seed}`);
 
         hideLobby();
-        showGame();
+        showGame(game.seed);
 
         hasJoined(game.opponent);
     });
@@ -132,7 +142,10 @@ function hideLobby() {
     app.stage.removeChild(lobbyTitle);
 }
 
-function showGame() { 
+function showGame(seed) { 
+    gameState.reset();
+    numberScroller.add();
+    numberScroller.setSeed(seed);
 
     healthBorderLeft.x = 20;
     healthBorderLeft.y = 20;
@@ -162,11 +175,30 @@ function showGame() {
         dartsRight[i].alpha = 0.5;
         app.stage.addChild(dartsRight[i]);
     }
+
+    let style = new PIXI.TextStyle({
+        fontFamily: 'xkcd-script',
+        fontSize: 36,
+        fill: '#000',
+        align: "center"
+    });
+
+    healthLeft = new PIXI.Text(String(maxHealth), style);
+    healthLeft.x = 38;
+    healthLeft.y = 36;
+    app.stage.addChild(healthLeft);
+
+    healthRight = new PIXI.Text(String(maxHealth), style);
+    healthRight.x = healthBarRight.x + 7;
+    healthRight.y = healthBarRight.y + 5;
+    app.stage.addChild(healthRight);
     
-    app.ticker.add(numberScroller.update.bind(numberScroller));
+    numberScroller.ticker = app.ticker.add(numberScroller.update.bind(numberScroller));
 }
 
 function hideGame() {
+
+    numberScroller.remove();
 
     app.stage.removeChild(healthBorderLeft);
     app.stage.removeChild(healthBorderRight);
@@ -191,7 +223,7 @@ window.onresize = function (event) {
 
     let oldAspect = windowWidth / windowHeight;
 
-    let w = window.innerWidth * 0.8;
+    let w = Math.min(window.innerWidth * 0.8, 1920);
     let h = w / oldAspect;
     app.view.style.width = w + "px";
     app.view.style.height = h + "px";
