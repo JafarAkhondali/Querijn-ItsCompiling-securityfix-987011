@@ -39,9 +39,9 @@ function init() {
         hasReceivedInviteCode(msg);
     })
 
-    let hasJoined = gameConnection.addTalkBox(2, function (playerName) { 
-        console.log(`Received a game join! Playing against ${playerName}`);
-        hasJoined(playerName);
+    let hasJoined = gameConnection.addTalkBox(2, function (game) { 
+        console.log(`Received a game join! Playing against ${game.opponent} with seed ${game.seed}`);
+        hasJoined(game.opponent);
     })
     
     document.getElementById("game").appendChild(app.view);
@@ -54,8 +54,7 @@ if (document.addEventListener)
     document.addEventListener("DOMContentLoaded", preload, false);
 else if (document.attachEvent)
     document.attachEvent("onreadystatechange", preload);
-else
-    window.onload = preload;
+else window.onload = preload;
 
 window.onresize = function (event) {
 

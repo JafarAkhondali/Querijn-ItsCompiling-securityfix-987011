@@ -4,28 +4,60 @@ import * as WebSocket from 'ws';
 import { Player } from './player';
 import { Game } from './game';
 
+import { Identifier } from './messages/identifier';
+
 // Settings
 const instantPlay: boolean = true;
 
 
 const server = http.createServer((req, res) => {
-    res.writeHead(301, { 'Location': 'http://localhost:80/game/' });
+    res.writeHead(404);
     res.end('what are you doing here');
 });
 
 const websocketServer = new WebSocket.Server({ server });
 
-let lobbyPlayers: Player[]=[];
-let games: Game[]=[];
+let allConnections: Player[] = [];
+let lobbyPlayers: Player[] = [];
+let games: Game[] = [];
 
 websocketServer.on('connection', (socket: WebSocket) => {
 
-    console.log("New player has joined, sending him an invite code.");
     let player = new Player(socket);
+    console.log(`New player (${player.identifier.c}) has joined, sending him an invite code.`);
+
+    // Make sure the player is removed everywhere when he disconnects.
+    socket.on('close', function() {
+        console.log(`Player ${player.identifier.c} has disconnected.`);
+
+        Identifier.returnCode(parseInt(player.identifier.c));
+
+        let index = allConnections.indexOf(this);
+        if (index >= 0) {
+            console.log(`Player ${player.identifier.c} was removed from connection array.`);
+            allConnections.splice(index, 1);
+        }
+
+        index = lobbyPlayers.indexOf(this);
+        if (index >= 0) {
+            console.log(`Player ${player.identifier.c} was removed from lobby.`);
+            lobbyPlayers.splice(index, 1);
+        }
+
+        for (let i = 0; i < games.length; i++) {
+            
+            index = games[i].participants.indexOf(this);
+            if (index >= 0) {
+                console.log(`Player ${player.identifier.c} was removed from the game.`);
+                games[i].setWinner(index == 1 ? 0 : 1, "Rage Quit!");
+            }
+        }
+    }.bind(player));
 
     // A new player joins, send him his 'invite code'
     player.sendIdentity();
 
+    allConnections.push(player);
     lobbyPlayers.push(player);
     if (instantPlay && lobbyPlayers.length == 2) {
         console.log("Instant Play is enabled, starting a new game with another player.");

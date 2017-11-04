@@ -1,11 +1,25 @@
 export class Identifier {
+    static codesAvailable: number[] = [];
+    static codesInitialized: boolean = false;
     m: string;
     c: string;
 
     constructor() {
+        if (Identifier.codesInitialized === false) {
+            for(let i = 1000; i <= 9999; i++) {
+                Identifier.codesAvailable.push(i);
+            }
+            Identifier.codesInitialized = true;
+        }
+
         this.m = "1";
 
-        let randomNumber = Math.floor((Math.random() * 242281) % 8999) + 1000;
+        let index = Math.floor(Math.random() * Identifier.codesAvailable.length);
+        let randomNumber = Identifier.codesAvailable.splice(index, 1)[0];
         this.c = String(randomNumber);
+    }
+
+    public static returnCode(code: number) {
+        Identifier.codesAvailable.push(code);
     }
 }
