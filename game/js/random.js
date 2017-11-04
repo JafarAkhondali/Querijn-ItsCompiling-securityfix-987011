@@ -8,5 +8,5 @@ Random.prototype.next = function () {
 };
 
 Random.prototype.nextBinary = function () {
-    return (this.next() - 1) % 2;
+    return (Math.floor(this.next()) - 1) % 2;
 };

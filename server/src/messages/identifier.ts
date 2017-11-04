@@ -1,4 +1,6 @@
 export class Identifier {
+    static id: number = 0;
+
     static codesAvailable: number[] = [];
     static codesInitialized: boolean = false;
     m: string;
@@ -12,7 +14,7 @@ export class Identifier {
             Identifier.codesInitialized = true;
         }
 
-        this.m = "1";
+        this.m = String(Identifier.id);
 
         let index = Math.floor(Math.random() * Identifier.codesAvailable.length);
         let randomNumber = Identifier.codesAvailable.splice(index, 1)[0];

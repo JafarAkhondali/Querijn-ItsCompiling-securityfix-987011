@@ -4,6 +4,8 @@ class NumberScroller {
 
         this.style = null;
 
+        this.started = false;
+        
         this.seed = 0;
         this.rand = null;
         
@@ -19,7 +21,7 @@ class NumberScroller {
         this.caughtNumbers = [];
         
         let sizeTotal = 800;
-        
+
         for(let i = 0; i < this.numberCount; i++) {
             let fontSize = 36 * ((i + 5) * 0.23);
             
@@ -42,6 +44,31 @@ class NumberScroller {
 
             this.createNumber("1", true);
         }
+    }
+    
+    remove() {
+        for(let i = 0; i < this.numberCount; i++) {
+            app.stage.removeChild(this.numbers[i].text);
+        }
+        
+        for(let i = 0; i < this.caughtNumbers.length; i++) {
+            app.stage.removeChild(this.caughtNumbers[i].text);
+        }
+
+        for(let i = 0; i < this.dropNumbers.length; i++) {
+            app.stage.removeChild(this.dropNumbers[i].text);
+        }
+
+        this.dropNumbers = [];
+        this.caughtNumbers = [];
+    }
+
+    start() { 
+        this.started = true;
+    }
+
+    stop() {
+        this.started = false;
     }
 
     createNumber(value, push) { 
@@ -70,23 +97,6 @@ class NumberScroller {
         if (push) this.numbers.push(number);
         else this.numbers.unshift(number);
     }
-    
-    remove() {
-        for(let i = 0; i < this.numberCount; i++) {
-            app.stage.removeChild(this.numbers[i].text);
-        }
-        
-        for(let i = 0; i < this.caughtNumbers.length; i++) {
-            app.stage.removeChild(this.caughtNumbers[i].text);
-        }
-
-        for(let i = 0; i < this.dropNumbers.length; i++) {
-            app.stage.removeChild(this.dropNumbers[i].text);
-        }
-
-        this.dropNumbers = [];
-        this.caughtNumbers = [];
-    }
 
     dropNumber(reason) {
 
@@ -112,7 +122,7 @@ class NumberScroller {
     }
 
     update() {
-        if (this.seed === void 0) return;
+        if (this.started !== true) return;
 
         let delta = this.ticker.elapsedMS / 1000;
 

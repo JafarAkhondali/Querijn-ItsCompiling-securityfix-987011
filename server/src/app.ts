@@ -8,7 +8,7 @@ import { Identifier } from './messages/identifier';
 
 // Settings
 const instantPlay: boolean = true;
-
+const startDelay: number = 256;
 
 const server = http.createServer((req, res) => {
     res.writeHead(404);
@@ -30,6 +30,7 @@ websocketServer.on('connection', (socket: WebSocket) => {
     socket.on('close', function() {
         console.log(`Player ${player.identifier.c} has disconnected.`);
 
+        // Give invite code back to the identifier class
         Identifier.returnCode(parseInt(player.identifier.c));
 
         let index = allConnections.indexOf(this);
@@ -61,7 +62,7 @@ websocketServer.on('connection', (socket: WebSocket) => {
     lobbyPlayers.push(player);
     if (instantPlay && lobbyPlayers.length == 2) {
         console.log("Instant Play is enabled, starting a new game with another player.");
-        games.push(new Game(lobbyPlayers.splice(0, 1)[0], lobbyPlayers.splice(0, 1)[0]));
+        games.push(new Game(startDelay, lobbyPlayers.splice(0, 1)[0], lobbyPlayers.splice(0, 1)[0]));
     }
 });
 

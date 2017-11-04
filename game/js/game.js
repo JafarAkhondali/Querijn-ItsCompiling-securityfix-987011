@@ -5,10 +5,13 @@ let windowHeight = 1080;
 let dartComboCount = 8;
 let numbersOnScreenCount = 8;
 let maxHealth = 64;
+let serverURL = "ws://localhost:1345";
 
 let gameState = {
 
-    reset: function() {
+    reset: function(seed) {
+        this.seed = seed;
+
         this.yourHealth = maxHealth;
         this.yourDarts = 0;
 
@@ -17,15 +20,28 @@ let gameState = {
     }
 }
 
+const InputType = {
+    Zero = 0,
+    One = 1,
+    Compile = 2,
+    Drop = 3
+};
+
 let app = new PIXI.Application(windowWidth, windowHeight, { backgroundColor: 0xFFFFFF });
 let gameSprites = PIXI.BaseTexture.fromImage("media/game.png");
 let assetsRequested = 0;
 let assetsLoaded = 0;
 
 // Assets
-let zeroButton = getZeroButton();
-let oneButton = getOneButton();
+let button = [
+    getZeroButton(),
+    getOneButton()
+];
+
+let zeroButton = button[0];
+let oneButton = button[1];
 let compileButton = getCompileButton();
+
 let inviteCode = 0;
 let numberScroller = new NumberScroller(numbersOnScreenCount);
 
@@ -42,6 +58,7 @@ let computerLeft = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Recta
 let computerRight = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu2_main.x, s_cpu2_main.y, s_cpu2_main.width, s_cpu2_main.height)));
 
 let lobbyTitle = null;
+let prepareToStartText = null;
 
 let getNerfDart = function() { return PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_nerf_dart.x, s_nerf_dart.y, s_nerf_dart.width, s_nerf_dart.height))); };
 let dartsLeft = [];
@@ -79,8 +96,16 @@ function init() {
     window.onresize();
     document.getElementById("game").appendChild(app.view);
 
-    gameConnection = new GameClient("ws://localhost:1345");
+    gameConnection = new GameClient(serverURL);
 
+
+    showSharedAssets();
+    showLobby();
+
+    addMessages();
+}
+    
+function addMessages() {
     // On Lobby Join
     let hasReceivedInviteCode = gameConnection.addTalkBox(1, function (suggestedCode) { 
         console.log(`Received invite code ${suggestedCode}, confirming receiving it.`);
@@ -93,22 +118,68 @@ function init() {
         window.history.pushState(suggestedCode, suggestedCode, `?i=${suggestedCode}`);
     });
 
-    showSharedAssets();
-    showLobby();
-
-    hideLobby();
-    showGame(5);
-
     // On Game Join
     let hasJoined = gameConnection.addTalkBox(2, function (game) { 
         console.log(`Received a game join! Playing against ${game.opponent} with seed ${game.seed}`);
 
         hideLobby();
-        showGame(game.seed);
+        
+        gameState.reset(game.seed);
+        showGame();
 
         hasJoined(game.opponent);
     });
 
+    let removeTimer = function () {
+        if (!prepareToStartText) return;
+        
+        app.stage.removeChild(prepareToStartText);
+        prepareToStartText = null;
+    }
+
+    // Prepare Start Game
+    gameConnection.addTalkBox(4, function (time) { 
+        console.log(`Received a game prepare start! Game will start in ${time} seconds.`);
+        
+        let style = new PIXI.TextStyle({
+            fontFamily: 'xkcd-script',
+            fontSize: 72,
+            fill: '#000',
+            align: "center"
+        });
+    
+        prepareToStartText = new PIXI.Text(`Game will start in ${time}..`, style);
+        time = parseInt(time);
+        prepareToStartText.x = windowWidth / 2 - prepareToStartText.width / 2;
+        prepareToStartText.y = 150;
+        app.stage.addChild(prepareToStartText);
+
+        let updateTimer = function(time) { 
+            if (!prepareToStartText || prepareToStartText.time === 0) {
+                removeTimer();
+                return;
+            } 
+            time -= 1;
+
+            prepareToStartText.text = `Game will start in ${(time)}..`;
+            prepareToStartText.x = windowWidth / 2 - prepareToStartText.width / 2;
+            setTimeout(updateTimer.bind(undefined, time), 1000);
+        }
+
+        setTimeout(updateTimer.bind(undefined, time), 1000);
+    });
+
+    // Start Game
+    gameConnection.addTalkBox(3, function (game) { 
+        console.log(`Received a game start!`);
+
+        removeTimer();
+        numberScroller.start();
+    });
+
+    let sendInput = gameConnection.addTalkBox(5, function (game) { 
+        console.log(`Received input?`);
+    });
 }
 
 function showSharedAssets() {
@@ -144,10 +215,9 @@ function hideLobby() {
     app.stage.removeChild(lobbyTitle);
 }
 
-function showGame(seed) { 
-    gameState.reset();
+function showGame() { 
     numberScroller.add();
-    numberScroller.setSeed(seed);
+    numberScroller.setSeed(gameState.seed);
 
     healthBorderLeft.x = 20;
     healthBorderLeft.y = 20;
@@ -195,7 +265,6 @@ function showGame(seed) {
     healthRight.y = healthBarRight.y + 5;
     app.stage.addChild(healthRight);
 
-
     compileButton.anchor.x = 0.5;
     compileButton.anchor.y = 0.5;
     compileButton.x = windowWidth / 2;
@@ -219,15 +288,30 @@ function showGame(seed) {
 
 window.onkeydown = function(e) {
 
-    console.log(e.keyCode);
-    if (e.keyCode == 13 || e.keyCode == 32 || e.keyCode == 116) { // enter, space or F5
+    if (e.keyCode == 13 || e.keyCode == 32 /*|| e.keyCode == 116*/) { // enter, space or F5
         e.preventDefault();
+        
+        compileButton.gotoAndStop(1);
+    }
+    else if (e.keyCode == 48 || e.keyCode == 49) { // 0 or 1
+        let binary = e.keyCode - 48;
+
+        button[binary].gotoAndStop(1);
+
+    }
+}
+
+window.onkeyup = function(e) {
+    
+    if (e.keyCode == 13 || e.keyCode == 32 /*|| e.keyCode == 116*/) { // enter, space or F5
+        e.preventDefault();
+        compileButton.gotoAndStop(0);
         
     }
     else if (e.keyCode == 48 || e.keyCode == 49) { // 0 or 1
         let binary = e.keyCode - 48;
 
-        console.log(`${binary} == ${numberScroller.currentNumber}`); 
+        button[binary].gotoAndStop(0);
     }
 }
 

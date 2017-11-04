@@ -1,4 +1,5 @@
 export class JoinMessage {
+
     public seed: number;
     public opponent: string;
 
@@ -9,11 +10,13 @@ export class JoinMessage {
 }
 
 export class Join {
+    static id: number = 2;
+
     m: string;
     c: JoinMessage;
 
     constructor(seed: number, opponentName: string) {
-        this.m = "2";
+        this.m = String(Join.id);
 
         this.c = new JoinMessage(seed, opponentName);
     }
