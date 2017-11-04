@@ -221,11 +221,11 @@ function showSharedAssets() {
     background.y = windowHeight - s_bg.height;
     app.stage.addChild(background);
     
-    computerLeft.x = 20;
+    computerLeft.x = 120;
     computerLeft.y = 320;
     app.stage.addChild(computerLeft);
     
-    computerRight.x = windowWidth - s_cpu2_main.width - 20;
+    computerRight.x = windowWidth - s_cpu2_main.width - 120;
     computerRight.y = 320;
     app.stage.addChild(computerRight);
 }
