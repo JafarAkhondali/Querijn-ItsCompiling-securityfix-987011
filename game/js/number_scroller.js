@@ -5,6 +5,7 @@ class NumberScroller {
         this.style = null;
 
         this.started = false;
+        this.paused = false;
 
         this.seed = 0;
         this.rand = null;
@@ -71,8 +72,16 @@ class NumberScroller {
         this.started = false;
     }
 
-    resetSpeed() {
+    pause() { 
+        this.paused = true;
+    }
 
+    unpause() {
+        this.paused = false;
+    }
+
+    resetSpeed() {
+        this.speed = 1;
     }
 
     createNumber(value, push) { 
@@ -129,7 +138,7 @@ class NumberScroller {
     }
 
     update() {
-        if (this.started !== true) return;
+        if (this.started !== true || this.paused === true) return;
 
         let delta = this.ticker.elapsedMS / 1000;
 

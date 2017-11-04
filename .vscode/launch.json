@@ -8,7 +8,14 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
+            "name": "Single",
+            "url": "http://localhost/game/",
+            "webRoot": "${workspaceRoot}"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Double",
             "url": "http://localhost/game/double.html",
             "webRoot": "${workspaceRoot}"
         }

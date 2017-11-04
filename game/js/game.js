@@ -188,8 +188,15 @@ function addMessages() {
 
     // Receive player sync
     gameConnection.addTalkBox(6, function (game) { 
+        if (game.player.isAttacking) {
+            numberScroller.pause();
+        }
+        else if (numberScroller.paused) {
+            numberScroller.unpause();
+        }
+
         gameState.yourHealth = game.player.health;
-        healthLeft.text = String(game.player.health);
+        healthLeft.text = String(Math.min(maxHealth, Math.ceil(game.player.health)));
 
         gameState.yourDarts = game.player.darts;
 
@@ -198,7 +205,7 @@ function addMessages() {
         }
 
         gameState.opponentHealth = game.opponent.health;
-        healthRight.text = String(game.opponent.health);
+        healthRight.text = String(Math.min(maxHealth, Math.ceil(game.opponent.health)));
 
         gameState.opponentDarts = game.opponent.darts;
 
@@ -322,6 +329,7 @@ window.onkeydown = function(e) {
         if (!gameState.started)
             return;
 
+        numberScroller.resetSpeed();
         compileButton.gotoAndStop(1);
 
         

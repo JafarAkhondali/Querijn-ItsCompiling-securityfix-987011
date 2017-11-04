@@ -1,5 +1,5 @@
 export class Identifier {
-    static id: number = 0;
+    static id: number = 1;
 
     static codesAvailable: number[] = [];
     static codesInitialized: boolean = false;

@@ -40,7 +40,7 @@ export class Game {
         this.players.push(player1);
         this.players.push(player2);
 
-        this.damageModifier = Math.random() * 1.5 + 0.5;
+        this.damageModifier = (Math.random() * 1.5 + 0.5) * 0.3;
         console.log(`Damage modifier = ${this.damageModifier}`);
 
         let seed = Math.floor(Math.random() * 123123123);
@@ -48,10 +48,6 @@ export class Game {
 
         for (let i = 0; i < 1000; i++) {
             this.numbers.push(this.random.nextBinary());
-        }
-
-        for (let i = 0; i < 10; i ++) {
-            console.log(this.numbers[i]);
         }
 
         player1.addListener(Join.id, function () {
@@ -81,15 +77,24 @@ export class Game {
                 // console.log(`Received input from ${player.identifier.c}: ${input}`);
                 switch(input) {
                     case InputType.Compile:
-                        // Calculate damage and send it back
+                        // Calculate damage       
+                        
+                        if (player.isAttacking || player.correct == 0) {
+                            break;
+                        }
                         
                         player.isAttacking = true;
                         
-                        let damage = this.damageModifier * player.correct;
+                        player.dps = this.damageModifier * player.correct;
                         let time = player.correct * 500;
 
+                        console.log(`Player ${player.identifier.c} will do ${player.dps} dps for ${time} ms`);
+                        
+                        player.correct = 0;
+                        player.combo = 0;
+
                         this.attackTimeout[i] = setTimeout(function (index: number) { 
-                            this.players[index].attacking = false; 
+                            this.players[index].isAttacking = false; 
                         }.bind(this, i), time);
                         break;
 
@@ -101,10 +106,11 @@ export class Game {
                         player.currentNumber++;
 
                         if (number == input) {
-                            player.correct++;
+                            player.correct += 1;
                             player.combo++;
                         }
                         else {
+                            player.correct -= 1;
                             player.combo = 0;
                         }
                         break;
@@ -112,6 +118,7 @@ export class Game {
                     case InputType.Drop:
                         // Drop a number
                         player.currentNumber++;
+                        player.correct = 0.5;
                         break;
                 };
             }.bind(this, player));
@@ -143,14 +150,15 @@ export class Game {
     }
 
     update() {
-        let delta = 1000 / this.hertz;
+        let delta = this.hertz / 1000;
 
         for (let j = 0; j < this.players.length; j++) {
             let player = this.players[j];
             let opponent = this.players[(j + 1) % 2];
 
+            console.log(`Player ${player.identifier.c} health: ${player.health}`);
             if (player.isAttacking && opponent.isAttacking == false) {
-                opponent.health -= opponent.dps * delta;
+                opponent.health -= player.dps * (delta);
             }
 
             player.send(new PlayerUpdate(player.isAttacking,    player.health,      player.combo,   opponent.health <= 0, 
