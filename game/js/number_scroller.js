@@ -17,13 +17,10 @@ class NumberScroller {
         this.numbers = [];
         this.dropNumbers = [];
         this.caughtNumbers = [];
-    }
-
-    add() {   
+        
         let sizeTotal = 800;
-
+        
         for(let i = 0; i < this.numberCount; i++) {
-
             let fontSize = 36 * ((i + 5) * 0.23);
             
             sizeTotal -= fontSize;
@@ -32,6 +29,16 @@ class NumberScroller {
                 y: sizeTotal,
                 size: fontSize
             });
+        }
+    }
+
+    get currentNumber() {
+        return parseInt(this.numbers[this.numbers.length - 1].binaryNumber);
+    }
+
+    add() {   
+
+        for(let i = 0; i < this.numberCount; i++) {
 
             this.createNumber("1", true);
         }
@@ -115,7 +122,6 @@ class NumberScroller {
         // A number gets dropped
         if (this.timeOnNumber >= this.dropDelay) {
             this.dropNumber();
-            console.log(this.speed);
         }
 
         let vibrateStrength = ((this.dropDelay - this.timeOnNumber) / this.dropDelay);

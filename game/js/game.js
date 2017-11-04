@@ -24,6 +24,8 @@ let assetsLoaded = 0;
 
 // Assets
 let zeroButton = getZeroButton();
+let oneButton = getOneButton();
+let compileButton = getCompileButton();
 let inviteCode = 0;
 let numberScroller = new NumberScroller(numbersOnScreenCount);
 
@@ -192,9 +194,43 @@ function showGame(seed) {
     healthRight.x = healthBarRight.x + 7;
     healthRight.y = healthBarRight.y + 5;
     app.stage.addChild(healthRight);
+
+
+    compileButton.anchor.x = 0.5;
+    compileButton.anchor.y = 0.5;
+    compileButton.x = windowWidth / 2;
+    compileButton.y = windowHeight - 50;
+    app.stage.addChild(compileButton);
+
+    zeroButton.anchor.x = 0.5;
+    zeroButton.anchor.y = 0.5;
+    zeroButton.x = windowWidth / 2 - compileButton.width / 2 - zeroButton.width / 2;
+    zeroButton.y = windowHeight - 50;
+    app.stage.addChild(zeroButton);
+
+    oneButton.anchor.x = 0.5;
+    oneButton.anchor.y = 0.5;
+    oneButton.x = windowWidth / 2 + compileButton.width / 2 + zeroButton.width / 2;
+    oneButton.y = windowHeight - 50;
+    app.stage.addChild(oneButton);
     
     numberScroller.ticker = app.ticker.add(numberScroller.update.bind(numberScroller));
 }
+
+window.onkeydown = function(e) {
+
+    console.log(e.keyCode);
+    if (e.keyCode == 13 || e.keyCode == 32 || e.keyCode == 116) { // enter, space or F5
+        e.preventDefault();
+        
+    }
+    else if (e.keyCode == 48 || e.keyCode == 49) { // 0 or 1
+        let binary = e.keyCode - 48;
+
+        console.log(`${binary} == ${numberScroller.currentNumber}`); 
+    }
+}
+
 
 function hideGame() {
 
@@ -209,6 +245,10 @@ function hideGame() {
         app.stage.removeChild(dartsLeft[i]);
         app.stage.removeChild(dartsRight[i]);
     }
+    
+    app.stage.removeChild(zeroButton);
+    app.stage.removeChild(oneButton);
+    app.stage.removeChild(compileButton);
     
     app.ticker.remove(numberScroller.update.bind(numberScroller));
 }
