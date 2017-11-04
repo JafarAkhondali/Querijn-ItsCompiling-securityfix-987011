@@ -2,15 +2,18 @@
 let app = new PIXI.Application(1920, 1080, { backgroundColor: 0xFFFFFF });
 let gameSprites = PIXI.BaseTexture.fromImage("media/game.png");
 let zeroButton = getZeroButton();
+let inviteCode = 0;
 
-let assets = 0;
+let gameConnection = null;
+
+let assetsRequested = 0;
 let assetsLoaded = 0;
 
 function assetHasLoaded() { 
     assetsLoaded++;
 
-    console.log(`Load progress: ${assetsLoaded}/${assets} (${(assetsLoaded/assets) * 100}%)`)
-    if (assetsLoaded == assets) {
+    console.log(`Load progress: ${assetsLoaded}/${assetsRequested} (${(assetsLoaded/assetsRequested) * 100}%)`);
+    if (assetsLoaded == assetsRequested) {
         init();
     }
 }
@@ -21,16 +24,30 @@ function preload() {
     font.onload = assetHasLoaded;
     font.onerror = function(e) { console.error(e);};
     font.fontFamily = "xkcd-script";
+    assetsRequested++;
+
+    // add assets here
+    
     font.src = 'media/xkcd-script.ttf';
-    assets++;
 }
 
 function init() {
+    gameConnection = new GameClient("ws://localhost:1345");
+    let hasReceivedInviteCode = gameConnection.addTalkBox(1, function (msg) { 
+        console.log(`Received invite code ${msg}, confirming receiving it`);
+        inviteCode = msg;
+        hasReceivedInviteCode(msg);
+    })
 
+    let hasJoined = gameConnection.addTalkBox(2, function (playerName) { 
+        console.log(`Received a game join! Playing against ${playerName}`);
+        hasJoined(playerName);
+    })
+    
     document.getElementById("game").appendChild(app.view);
     let numberScroller = new NumberScroller(5);
 
-    app.stage.addChild(zeroButton);
+
 }
 
 if (document.addEventListener)
