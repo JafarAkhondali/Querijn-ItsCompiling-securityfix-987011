@@ -8,7 +8,9 @@ import { Identifier } from './messages/identifier';
 
 // Settings
 const instantPlay: boolean = true;
-const startDelay: number = 256;
+const startDelay: number = 8;
+const maxHealth: number = 64;
+const hertz: number = 30;
 
 const server = http.createServer((req, res) => {
     res.writeHead(404);
@@ -62,7 +64,7 @@ websocketServer.on('connection', (socket: WebSocket) => {
     lobbyPlayers.push(player);
     if (instantPlay && lobbyPlayers.length == 2) {
         console.log("Instant Play is enabled, starting a new game with another player.");
-        games.push(new Game(startDelay, lobbyPlayers.splice(0, 1)[0], lobbyPlayers.splice(0, 1)[0]));
+        games.push(new Game(hertz, maxHealth, startDelay, lobbyPlayers.splice(0, 1)[0], lobbyPlayers.splice(0, 1)[0]));
     }
 });
 

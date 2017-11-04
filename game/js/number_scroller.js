@@ -5,7 +5,7 @@ class NumberScroller {
         this.style = null;
 
         this.started = false;
-        
+
         this.seed = 0;
         this.rand = null;
         
@@ -71,6 +71,10 @@ class NumberScroller {
         this.started = false;
     }
 
+    resetSpeed() {
+
+    }
+
     createNumber(value, push) { 
         
         let fontSize = this.numberPositions[push ? this.numberPositions.length - 1 : 0].size;
@@ -93,9 +97,7 @@ class NumberScroller {
         };
         
         number.text.y = 800;
-
-        if (push) this.numbers.push(number);
-        else this.numbers.unshift(number);
+        this.numbers.unshift(number);
     }
 
     dropNumber(reason) {
@@ -110,6 +112,11 @@ class NumberScroller {
         number.text.x = windowWidth / 2;
 
         if (!reason || reason === "dropped") {
+            
+            if (sendInput && gameState.started) {
+                sendInput(InputType.Drop);
+            }
+
             number.text.style.fill = "#FF0000";
             this.dropNumbers.push(number);
         }
@@ -180,6 +187,23 @@ class NumberScroller {
 
         for(let i = 0; i < this.caughtNumbers.length; i++) {
             let number = this.caughtNumbers[i];
+            let numberPosition = this.numberPositions[this.numbers.length - 1];
+            let targetY = numberPosition.y - 50;
+            
+            number.text.y += (targetY - number.text.y) * delta * 10;
+
+            number.text.x -= delta * 114;
+            number.text.y += number.text.rotation * 50;
+
+            number.text.rotation += delta;
+            number.text.alpha -= delta;
+
+
+            if (number.text.alpha <= 0) {
+                app.stage.removeChild(this.caughtNumbers[i].text);
+                this.caughtNumbers.splice(i, 1);
+                i--;
+            }
         }
     }
 

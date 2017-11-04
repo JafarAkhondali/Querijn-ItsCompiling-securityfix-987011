@@ -10,6 +10,7 @@ let serverURL = "ws://localhost:1345";
 let gameState = {
 
     reset: function(seed) {
+        this.started = false;
         this.seed = seed;
 
         this.yourHealth = maxHealth;
@@ -21,10 +22,10 @@ let gameState = {
 }
 
 const InputType = {
-    Zero = 0,
-    One = 1,
-    Compile = 2,
-    Drop = 3
+    Zero: 0,
+    One: 1,
+    Compile: 2,
+    Drop: 3
 };
 
 let app = new PIXI.Application(windowWidth, windowHeight, { backgroundColor: 0xFFFFFF });
@@ -69,6 +70,8 @@ for (let i = 0; i < dartComboCount; i++) {
 }
 
 let gameConnection = null;
+let sendInput = null;
+let waitForUp = false;
 
 function assetHasLoaded() { 
     assetsLoaded++;
@@ -173,12 +176,35 @@ function addMessages() {
     gameConnection.addTalkBox(3, function (game) { 
         console.log(`Received a game start!`);
 
+        gameState.started = true;
         removeTimer();
         numberScroller.start();
     });
 
-    let sendInput = gameConnection.addTalkBox(5, function (game) { 
+    // Send input
+    sendInput = gameConnection.addTalkBox(5, function (game) { 
         console.log(`Received input?`);
+    });
+
+    // Receive player sync
+    gameConnection.addTalkBox(6, function (game) { 
+        gameState.yourHealth = game.player.health;
+        healthLeft.text = String(game.player.health);
+
+        gameState.yourDarts = game.player.darts;
+
+        for (let i = 0; i < dartsLeft.length; i++) {
+            dartsLeft[i].alpha = (i < game.player.darts) ? 1.0 : 0.5;
+        }
+
+        gameState.opponentHealth = game.opponent.health;
+        healthRight.text = String(game.opponent.health);
+
+        gameState.opponentDarts = game.opponent.darts;
+
+        for (let i = 0; i < dartsRight.length; i++) {
+            dartsRight[i].alpha = (i < game.opponent.darts) ? 1.0 : 0.5;
+        }
     });
 }
 
@@ -288,16 +314,44 @@ function showGame() {
 
 window.onkeydown = function(e) {
 
+    if (waitForUp) return;
+
     if (e.keyCode == 13 || e.keyCode == 32 /*|| e.keyCode == 116*/) { // enter, space or F5
         e.preventDefault();
         
+        if (!gameState.started)
+            return;
+
         compileButton.gotoAndStop(1);
+
+        
+        waitForUp = true;
+        if (sendInput) {
+            sendInput(InputType.Compile);
+        }
     }
     else if (e.keyCode == 48 || e.keyCode == 49) { // 0 or 1
         let binary = e.keyCode - 48;
 
+        if (!gameState.started)
+            return;
+        
         button[binary].gotoAndStop(1);
 
+        let isCorrectButton = binary == numberScroller.currentNumber;
+
+        waitForUp = true;
+        if (sendInput) {
+            sendInput(binary == 1 ? InputType.One : InputType.Zero);
+        }
+
+        if (isCorrectButton) {
+            // addCode();
+            numberScroller.dropNumber("caught");
+        }
+        else {
+            numberScroller.dropNumber("dropped");
+        }
     }
 }
 
@@ -307,11 +361,13 @@ window.onkeyup = function(e) {
         e.preventDefault();
         compileButton.gotoAndStop(0);
         
+        waitForUp = false;
     }
     else if (e.keyCode == 48 || e.keyCode == 49) { // 0 or 1
         let binary = e.keyCode - 48;
-
         button[binary].gotoAndStop(0);
+
+        waitForUp = false;
     }
 }
 

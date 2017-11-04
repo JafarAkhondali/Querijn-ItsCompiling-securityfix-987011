@@ -11,6 +11,13 @@ export class Player {
     hasJoined: boolean = false;
     isInGame: boolean = false;
 
+    public currentNumber = 0;
+    public correct = 0;
+    public combo = 0;
+    public health = 64;
+    public isAttacking = false;
+    public dps = 0;
+
     constructor(socket: WebSocket) {
         this.socket = socket;
 

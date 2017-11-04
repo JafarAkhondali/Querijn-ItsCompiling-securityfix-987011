@@ -1,4 +1,4 @@
-enum InputType {
+export enum InputType {
     Zero = 0,
     One = 1,
     Compile = 2,

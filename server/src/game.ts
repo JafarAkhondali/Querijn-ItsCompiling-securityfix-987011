@@ -1,28 +1,70 @@
+import { Random } from './random';
 import { Player } from './player';
 
 import { Join } from './messages/join';
 import { Start, PrepareStart } from './messages/start';
-import { Input } from './messages/input';
+import { Input, InputType } from './messages/input';
+import { PlayerUpdate } from './messages/player_update';
 
 export class Game {
     players: Player[] = []; 
     startDelay: number;
+    hertz: number;
 
-    constructor(startDelay: number, player1 : Player, player2 : Player) {
+    damageModifier: number;
+
+    random: Random;
+    numbers: number[] = [];
+
+    attackTimeout: (NodeJS.Timer|null)[] = [ null, null ];
+    updateInterval: NodeJS.Timer|null = null;
+
+    constructor(hertz: number, maxHealth: number, startDelay: number, player1 : Player, player2 : Player) {
         this.startDelay = startDelay;
+        this.hertz = hertz;
+
+        player1.health = maxHealth;
+        player1.currentNumber = 0;
+        player1.correct = 0;
+        player1.combo = 0;
+        player1.isAttacking = false;
+        player1.dps = 0;
+
+        player2.health = maxHealth;
+        player2.currentNumber = 0;
+        player2.correct = 0;
+        player2.combo = 0;
+        player2.isAttacking = false;
+        player2.dps = 0;
 
         this.players.push(player1);
         this.players.push(player2);
 
+        this.damageModifier = Math.random() * 1.5 + 0.5;
+        console.log(`Damage modifier = ${this.damageModifier}`);
+
         let seed = Math.floor(Math.random() * 123123123);
+        this.random = new Random(seed);
+
+        for (let i = 0; i < 1000; i++) {
+            this.numbers.push(this.random.nextBinary());
+        }
+
+        for (let i = 0; i < 10; i ++) {
+            console.log(this.numbers[i]);
+        }
 
         player1.addListener(Join.id, function () {
+            if (player1.isInGame) return;
+
             player1.isInGame = true;
             console.log("Player 1 joined!");
             this.checkStart();
         }.bind(this));
 
         player2.addListener(Join.id, function () {
+            if (player2.isInGame) return;
+
             player2.isInGame = true;
             console.log("Player 2 joined!");
             this.checkStart();
@@ -34,11 +76,50 @@ export class Game {
         for (let i = 0; i < this.players.length; i++) {
             let player = this.players[i];
             
-            player.addListener(Input.id, function (input: Input) { 
+            player.addListener(Input.id, function (player: Player, input: InputType) { 
 
-                debugger;
-            }.bind(this));
+                // console.log(`Received input from ${player.identifier.c}: ${input}`);
+                switch(input) {
+                    case InputType.Compile:
+                        // Calculate damage and send it back
+                        
+                        player.isAttacking = true;
+                        
+                        let damage = this.damageModifier * player.correct;
+                        let time = player.correct * 500;
+
+                        this.attackTimeout[i] = setTimeout(function (index: number) { 
+                            this.players[index].attacking = false; 
+                        }.bind(this, i), time);
+                        break;
+
+                    case InputType.One:
+                    case InputType.Zero:
+                        // Check if correct, award if so
+
+                        let number = this.numbers[player.currentNumber];
+                        player.currentNumber++;
+
+                        if (number == input) {
+                            player.correct++;
+                            player.combo++;
+                        }
+                        else {
+                            player.combo = 0;
+                        }
+                        break;
+
+                    case InputType.Drop:
+                        // Drop a number
+                        player.currentNumber++;
+                        break;
+                };
+            }.bind(this, player));
         }
+    }
+
+    public getNumber(index: number) {
+        return this.numbers[index];
     }
 
     public checkStart() {
@@ -55,14 +136,54 @@ export class Game {
             console.log("Starting game");
             for (let i = 0; i < this.players.length; i++) 
                 this.players[i].send(new Start());
+
+            this.updateInterval = setInterval(this.update.bind(this), 1000 / this.hertz);
         }.bind(this), this.startDelay * 1000);
         
+    }
+
+    update() {
+        let delta = 1000 / this.hertz;
+
+        for (let j = 0; j < this.players.length; j++) {
+            let player = this.players[j];
+            let opponent = this.players[(j + 1) % 2];
+
+            if (player.isAttacking && opponent.isAttacking == false) {
+                opponent.health -= opponent.dps * delta;
+            }
+
+            player.send(new PlayerUpdate(player.isAttacking,    player.health,      player.combo,   opponent.health <= 0, 
+                                        opponent.isAttacking,   opponent.health,    opponent.combo, player.health <= 0));
+
+            // If we've won, don't update the other player.
+            if (opponent.health <= 0) {
+                console.log("Game over by death!");
+                this.setWinner(j, "Death");
+                if (j == 0) opponent.send(new PlayerUpdate(opponent.isAttacking,    opponent.health,        opponent.combo,   opponent.health <= 0, 
+                                                            player.isAttacking,     player.health,          player.combo,     player.health <= 0));
+                return;
+            }
+            
+        }
+    }
+
+    clearTimeouts() {
+        if (this.updateInterval) clearInterval(this.updateInterval);
+
+        for (let i = 0; i < this.attackTimeout.length; i++) {
+            let timeout = this.attackTimeout[i];
+            if (timeout === null) continue;
+            
+            clearTimeout(timeout);
+        }
     }
 
     public setWinner(index: number, reason: string) {
         if (index !== 1 && index !== 0) 
             return;
 
+        this.clearTimeouts();
         console.log(`Player ${this.players[index].identifier.c} won! Reason: ${reason}`);
     }
 
