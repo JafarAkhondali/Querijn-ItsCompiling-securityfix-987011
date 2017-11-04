@@ -138,7 +138,50 @@ class NumberScroller {
     }
 
     update() {
-        if (this.started !== true || this.paused === true) return;
+
+        for(let i = 0; i < this.dropNumbers.length; i++) {
+            let number = this.dropNumbers[i];
+            let numberPosition = this.numberPositions[this.numbers.length - 1];
+            let targetY = numberPosition.y - 50;
+            
+            number.text.y += (targetY - number.text.y) * delta * 10;
+
+            number.text.x += delta * 114;
+            number.text.y += number.text.rotation * 50;
+
+            number.text.rotation += delta;
+            number.text.alpha -= delta;
+
+            if (number.text.alpha <= 0) {
+                app.stage.removeChild(this.dropNumbers[i].text);
+                this.dropNumbers.splice(i, 1);
+                i--;
+            }
+        }
+
+        for(let i = 0; i < this.caughtNumbers.length; i++) {
+            let number = this.caughtNumbers[i];
+            let numberPosition = this.numberPositions[this.numbers.length - 1];
+            let targetY = numberPosition.y - 50;
+            
+            number.text.y += (targetY - number.text.y) * delta * 10;
+
+            number.text.x -= delta * 114;
+            number.text.y += number.text.rotation * 50;
+
+            number.text.rotation += delta;
+            number.text.alpha -= delta;
+
+
+            if (number.text.alpha <= 0) {
+                app.stage.removeChild(this.caughtNumbers[i].text);
+                this.caughtNumbers.splice(i, 1);
+                i--;
+            }
+        }
+
+        if (this.started !== true || this.paused === true) 
+            return;
 
         let delta = this.ticker.elapsedMS / 1000;
 
@@ -171,48 +214,6 @@ class NumberScroller {
 
             number.text.y += (numberPosition.y - number.text.y) * delta * 10;
             number.text.style.fontSize += (numberPosition.size - number.text.style.fontSize) * delta * 10;
-        }
-
-        for(let i = 0; i < this.dropNumbers.length; i++) {
-            let number = this.dropNumbers[i];
-            let numberPosition = this.numberPositions[this.numbers.length - 1];
-            let targetY = numberPosition.y - 50;
-            
-            number.text.y += (targetY - number.text.y) * delta * 10;
-
-            number.text.x += delta * 114;
-            number.text.y += number.text.rotation * 50;
-
-            number.text.rotation += delta;
-            number.text.alpha -= delta;
-
-
-            if (number.text.alpha <= 0) {
-                app.stage.removeChild(this.dropNumbers[i].text);
-                this.dropNumbers.splice(i, 1);
-                i--;
-            }
-        }
-
-        for(let i = 0; i < this.caughtNumbers.length; i++) {
-            let number = this.caughtNumbers[i];
-            let numberPosition = this.numberPositions[this.numbers.length - 1];
-            let targetY = numberPosition.y - 50;
-            
-            number.text.y += (targetY - number.text.y) * delta * 10;
-
-            number.text.x -= delta * 114;
-            number.text.y += number.text.rotation * 50;
-
-            number.text.rotation += delta;
-            number.text.alpha -= delta;
-
-
-            if (number.text.alpha <= 0) {
-                app.stage.removeChild(this.caughtNumbers[i].text);
-                this.caughtNumbers.splice(i, 1);
-                i--;
-            }
         }
     }
 
