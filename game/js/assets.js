@@ -22,7 +22,7 @@ let s_1_up = {
     x: 345, y: 0
 }
 
-let s_asset_8 = {
+let s_nerf_dart = {
     width: 45,
     height: 44,
     x: 460, y: 0

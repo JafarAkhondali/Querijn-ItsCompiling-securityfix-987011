@@ -3,10 +3,14 @@ class NumberScroller {
     constructor(numberCount) {
 
         this.style = null;
+
+        this.seed = 0;
         
         this.numberCount = numberCount || 10;
         this.numbers = [];
-        
+    }
+
+    add() {        
         this.style = new PIXI.TextStyle({
             fontFamily: 'xkcd-script',
             fontSize: 36,
@@ -24,6 +28,10 @@ class NumberScroller {
         for(let i = 0; i < this.numberCount; i++) {
             app.stage.addChild(this.numbers[i]);
         }
+    }
+
+    setSeed(number) {
+        this.seed = number;
     }
 
     remove() {
