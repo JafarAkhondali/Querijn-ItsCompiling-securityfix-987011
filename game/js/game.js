@@ -196,19 +196,19 @@ function addMessages() {
         }
 
         gameState.yourHealth = game.player.health;
-        healthLeft.text = String(Math.min(maxHealth, Math.ceil(game.player.health)));
-
         gameState.yourDarts = game.player.darts;
+        gameState.opponentHealth = game.opponent.health;
+        gameState.opponentDarts = game.opponent.darts;
 
+        healthLeft.text = String(Math.min(maxHealth, Math.ceil(game.player.health)));
+        healthBarLeft.scale.x = (game.player.health / maxHealth);       
         for (let i = 0; i < dartsLeft.length; i++) {
             dartsLeft[i].alpha = (i < game.player.darts) ? 1.0 : 0.5;
         }
 
-        gameState.opponentHealth = game.opponent.health;
         healthRight.text = String(Math.min(maxHealth, Math.ceil(game.opponent.health)));
-
-        gameState.opponentDarts = game.opponent.darts;
-
+        healthBarRight.scale.x = -(game.opponent.health / maxHealth);         
+        healthBarRight.x = (windowWidth - 80) - s_healthbar.width * (1.0 - Math.abs(healthBarRight.scale.x));
         for (let i = 0; i < dartsRight.length; i++) {
             dartsRight[i].alpha = (i < game.opponent.darts) ? 1.0 : 0.5;
         }

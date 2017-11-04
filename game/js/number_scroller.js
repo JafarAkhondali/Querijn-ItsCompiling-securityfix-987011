@@ -139,6 +139,7 @@ class NumberScroller {
 
     update() {
 
+        let delta = this.ticker.elapsedMS / 1000;
         for(let i = 0; i < this.dropNumbers.length; i++) {
             let number = this.dropNumbers[i];
             let numberPosition = this.numberPositions[this.numbers.length - 1];
@@ -183,7 +184,6 @@ class NumberScroller {
         if (this.started !== true || this.paused === true) 
             return;
 
-        let delta = this.ticker.elapsedMS / 1000;
 
         this.speed += delta * 0.5;
         this.timeOnNumber += delta * this.speed;

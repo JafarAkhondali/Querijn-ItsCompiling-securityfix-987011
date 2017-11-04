@@ -40,7 +40,7 @@ export class Game {
         this.players.push(player1);
         this.players.push(player2);
 
-        this.damageModifier = (Math.random() * 1.5 + 0.5) * 0.3;
+        this.damageModifier = Math.random() * 0.4 + 0.8;
         console.log(`Damage modifier = ${this.damageModifier}`);
 
         let seed = Math.floor(Math.random() * 123123123);
@@ -82,13 +82,13 @@ export class Game {
                         if (player.isAttacking || player.correct == 0) {
                             break;
                         }
-                        
+
                         player.isAttacking = true;
                         
                         player.dps = this.damageModifier * player.correct;
                         let time = player.correct * 500;
 
-                        console.log(`Player ${player.identifier.c} will do ${player.dps} dps for ${time} ms`);
+                        console.log(`Player ${player.identifier.c} will do ${player.dps} dps for ${time} ms (correct: ${player.correct}).`);
                         
                         player.correct = 0;
                         player.combo = 0;
@@ -110,7 +110,7 @@ export class Game {
                             player.combo++;
                         }
                         else {
-                            player.correct -= 1;
+                            player.correct = Math.max(player.correct - 1, 0);
                             player.combo = 0;
                         }
                         break;
@@ -118,7 +118,7 @@ export class Game {
                     case InputType.Drop:
                         // Drop a number
                         player.currentNumber++;
-                        player.correct = 0.5;
+                        player.correct = Math.max(player.correct - 0.5, 0);
                         break;
                 };
             }.bind(this, player));
@@ -156,7 +156,7 @@ export class Game {
             let player = this.players[j];
             let opponent = this.players[(j + 1) % 2];
 
-            console.log(`Player ${player.identifier.c} health: ${player.health}`);
+            // console.log(`Player ${player.identifier.c} health: ${player.health}`);
             if (player.isAttacking && opponent.isAttacking == false) {
                 opponent.health -= player.dps * (delta);
             }
