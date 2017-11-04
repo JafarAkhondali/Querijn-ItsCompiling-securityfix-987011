@@ -9,7 +9,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
-            "url": "http://localhost/game/",
+            "url": "http://localhost/game/double.html",
             "webRoot": "${workspaceRoot}"
         }
     ]
