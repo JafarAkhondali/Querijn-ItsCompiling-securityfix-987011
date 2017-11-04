@@ -1,20 +1,27 @@
 
 class NumberScroller {
-    constructor() {
+    constructor(numberCount) {
+
+        this.style = null;
+        
+        this.numberCount = numberCount || 10;
+        this.numbers = [];
+        
         this.style = new PIXI.TextStyle({
             fontFamily: 'xkcd-script',
             fontSize: 36,
             fill: '#000'
         });
         
-        this.numbers = [];
-        
-        for(let i = 0; i < 10; i++) {
-            let number = new PIXI.Text('', style);
+        for(let i = 0; i < this.numberCount; i++) {
+            let number = new PIXI.Text('', this.style);
             
-            number.x = app.view.width / 2;
+            number.x = 300;
             number.y = i * 36;
             this.numbers.push(number);
+        }
+
+        for(let i = 0; i < this.numberCount; i++) {
             app.stage.addChild(this.numbers[i]);
         }
     }
