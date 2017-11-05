@@ -832,6 +832,7 @@ window.onkeyup = function(e) {
 
 function hideGame() {
 
+    numberScroller.pause();
     numberScroller.remove();
 
     if (codeRightInterval) {
