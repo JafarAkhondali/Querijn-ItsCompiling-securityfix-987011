@@ -71,9 +71,15 @@ let zeroButton = button[0];
 let oneButton = button[1];
 let compileButton = getCompileButton();
 
-let inviteCode = 0;
+let world = new PIXI.Container();
+let worldTicker = null;
+let worldTargetX = -s_lobby.width;
+world.x = -worldTargetX;
+app.stage.addChild(world);
+
 let numberScroller = new NumberScroller(numbersOnScreenCount);
 
+let lobbyBackground = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_lobby.x, s_lobby.y, s_lobby.width, s_lobby.height)));
 let background = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_bg.x, s_bg.y, s_bg.width, s_bg.height)));
 let healthBorderLeft = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_healthborder.x, s_healthborder.y, s_healthborder.width, s_healthborder.height)));
 let healthBorderRight = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_healthborder.x, s_healthborder.y, s_healthborder.width, s_healthborder.height)));
@@ -113,6 +119,7 @@ let gameConnection = null;
 let gameToJoin = null;
 let sendInput = null;
 let waitForUp = false;
+let inviteCode = 0;
 
 let loaderAssets = null;
 
@@ -186,11 +193,11 @@ function addMessages() {
             gameToJoin = 0;
 
             lobbyTitle.text = 'Attempting to join game..';
-            lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
+            lobbyTitle.x = -s_lobby.width +  windowWidth / 2 - lobbyTitle.width / 2;
         }
         else {
-            lobbyTitle.text = 'We are connected to the server!\n\nGot a friend?\nSend them your URL to play with them!';
-            lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
+            lobbyTitle.text = 'We are connected to the server!\n\nGot a friend? Send them your URL to play with them! (' + window.location + ')';
+            lobbyTitle.x = -s_lobby.width + windowWidth / 2 - lobbyTitle.width / 2;
 
             window.history.pushState(suggestedCode, suggestedCode, `?i=${suggestedCode}`);
         }
@@ -211,7 +218,7 @@ function addMessages() {
     let removeTimer = function () {
         if (!prepareToStartText) return;
         
-        app.stage.removeChild(prepareToStartText);
+        world.removeChild(prepareToStartText);
         prepareToStartText = null;
     }
 
@@ -230,7 +237,7 @@ function addMessages() {
         time = parseInt(time);
         prepareToStartText.x = windowWidth / 2 - prepareToStartText.width / 2;
         prepareToStartText.y = 150;
-        app.stage.addChild(prepareToStartText);
+        world.addChild(prepareToStartText);
 
         let updateTimer = function(time) { 
             if (!prepareToStartText || prepareToStartText.time === 0) {
@@ -291,20 +298,22 @@ function addMessages() {
             
             let computerX = computerRight.x;
             let computerY = computerRight.y;
-            app.stage.removeChild(computerRight);
+            world.removeChild(computerRight);
 
             computerRight = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu2_bsod.x, s_cpu2_bsod.y, s_cpu2_bsod.width, s_cpu2_bsod.height)));
             computerRight.x = computerX;
             computerRight.y = computerY;
-            app.stage.addChild(computerRight);
+            world.addChild(computerRight);
+            world.addChild(playerRight);
             
-            app.stage.removeChild(codeRight);
+            world.removeChild(codeRight);
 
             hideGame();
             showLobby();
             
             lobbyTitle.text = 'You have won! Congratulations!';
-            lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
+            lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;    
+            lobbyTitle.y = 50;
         }
         else if (game.player.isAttacking && gameState.yourState != PlayerState.Attacking) {
             gameState.yourPrevState = gameState.yourState;
@@ -325,19 +334,22 @@ function addMessages() {
 
             let computerX = computerLeft.x;
             let computerY = computerLeft.y;
-            app.stage.removeChild(computerLeft);
+            world.removeChild(computerLeft);
 
             computerLeft = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu1_bsod.x, s_cpu1_bsod.y, s_cpu1_bsod.width, s_cpu1_bsod.height)));
             computerLeft.x = computerX;
             computerLeft.y = computerY;
-            app.stage.addChild(computerLeft);
-            app.stage.removeChild(codeLeft);
+            world.addChild(computerLeft);
+            world.addChild(playerLeft);
+
+            world.removeChild(codeLeft);
 
             hideGame();
             showLobby();
 
             lobbyTitle.text = 'You lost. Well, at least you gave it your best.';
             lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
+            lobbyTitle.y = 50;
         }
         else if (game.opponent.isAttacking && gameState.opponentState != PlayerState.Attacking) {
             gameState.opponentPrevState = gameState.opponentState;
@@ -386,6 +398,15 @@ function addMessages() {
             else playerRight.state.setAnimation(0, 'shoot2');
         }
     });
+}
+
+function updateWorld() { 
+
+    let delta = worldTicker.elapsedMS / 1000;
+
+    let cameraTargetX = -worldTargetX; // Camera pos is inverted, we move the world, not the camera.
+    
+    world.x += (cameraTargetX - world.x) * delta * 10;
 }
 
 function updateAnimations() {
@@ -565,15 +586,15 @@ function showSharedAssets() {
     
     background.x = 0;
     background.y = windowHeight - s_bg.height;
-    app.stage.addChild(background);
+    world.addChild(background);
     
     computerLeft.x = 120;
     computerLeft.y = 320;
-    app.stage.addChild(computerLeft);
+    world.addChild(computerLeft);
     
     computerRight.x = windowWidth - s_cpu2_main.width - 120;
     computerRight.y = 320;
-    app.stage.addChild(computerRight);
+    world.addChild(computerRight);
     
     codeOffsetLeft = Math.floor(Math.random() * 2000) % sourceCode.length;
     codeOffsetRight = Math.floor(Math.random() * 2000) % sourceCode.length;
@@ -589,7 +610,7 @@ function showSharedAssets() {
     codeLeft = new PIXI.Text(code, style);
     codeLeft.x = 190;
     codeLeft.y = 400;
-    app.stage.addChild(codeLeft);
+    world.addChild(codeLeft);
 
     codeLeft.mask = new PIXI.Graphics(); 
     codeLeft.mask.beginFill(0xFFFFFF, 1);
@@ -602,7 +623,7 @@ function showSharedAssets() {
     codeRight = new PIXI.Text(code, style);
     codeRight.x = 1210;
     codeRight.y = 400;
-    app.stage.addChild(codeRight);
+    world.addChild(codeRight);
 
     codeRight.mask = new PIXI.Graphics(); 
     codeRight.mask.beginFill(0xFFFFFF, 1);
@@ -612,22 +633,28 @@ function showSharedAssets() {
     codeRight.mask.lineTo(1210, 670);
     
     playerLeft = new PIXI.spine.Spine(loaderAssets.player.spineData);
-    app.stage.addChild(playerLeft);
+    world.addChild(playerLeft);
     playerLeft.state.setAnimation(0, 'idle', true);
     playerLeft.x = 520;
     playerLeft.y = 1215;
 
     playerRight = new PIXI.spine.Spine(loaderAssets.player.spineData);
-    app.stage.addChild(playerRight);
+    world.addChild(playerRight);
     playerRight.state.setAnimation(0, 'idle', true);
     playerRight.scale.x = -1;
     playerRight.x = 1360;
     playerRight.y = 1215;
 
+    worldTicker = app.ticker.add(updateWorld);
     app.ticker.add(updateAnimations);
 }
 
 function showLobby() {
+    
+    lobbyBackground.x = -s_lobby.width;
+    lobbyBackground.y = 0;
+    world.addChild(lobbyBackground);
+
     let style = new PIXI.TextStyle({
         fontFamily: 'xkcd-script',
         fontSize: 52,
@@ -636,46 +663,48 @@ function showLobby() {
     });
     
     lobbyTitle = new PIXI.Text('Waiting for a connection..', style);
-    lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
-    lobbyTitle.y = 50;
-    app.stage.addChild(lobbyTitle);
+    lobbyTitle.x = -s_lobby.width + windowWidth / 2 - lobbyTitle.width / 2;
+    lobbyTitle.y = windowHeight - 200;
+    world.addChild(lobbyTitle);
 }
 
 function hideLobby() {
-    app.stage.removeChild(lobbyTitle);
+    world.removeChild(lobbyTitle);
 }
 
 function showGame() { 
+    worldTargetX = 0;
+
     numberScroller.setNumbers(gameState.numbers);
     numberScroller.add();
 
     healthBorderLeft.x = 20;
     healthBorderLeft.y = 20;
-    app.stage.addChild(healthBorderLeft);
+    world.addChild(healthBorderLeft);
 
     healthBorderRight.x = windowWidth - s_healthborder.width - 20;
     healthBorderRight.y = 20;
-    app.stage.addChild(healthBorderRight);
+    world.addChild(healthBorderRight);
 
     healthBarLeft.x = 80;
     healthBarLeft.y = healthBorderLeft.y + s_healthborder.height / 2 - s_healthbar.height / 2;
-    app.stage.addChild(healthBarLeft);
+    world.addChild(healthBarLeft);
 
     healthBarRight.x = windowWidth - 80;
     healthBarRight.y = healthBorderRight.y + s_healthborder.height / 2 - s_healthbar.height / 2;
     healthBarRight.scale.x = -1;        
-    app.stage.addChild(healthBarRight);
+    world.addChild(healthBarRight);
     
     for (let i = 0; i < dartComboCount; i++) {
         dartsLeft[i].x = (i + 0.5) * (10 + s_nerf_dart.width);
         dartsLeft[i].y = 100;
         dartsLeft[i].alpha = 0.5;
-        app.stage.addChild(dartsLeft[i]);
+        world.addChild(dartsLeft[i]);
 
         dartsRight[i].x = windowWidth - ((dartComboCount - i) + 0.5) * (10 + s_nerf_dart.width);
         dartsRight[i].y = 100;
         dartsRight[i].alpha = 0.5;
-        app.stage.addChild(dartsRight[i]);
+        world.addChild(dartsRight[i]);
     }
 
     let style = new PIXI.TextStyle({
@@ -688,12 +717,12 @@ function showGame() {
     healthLeft = new PIXI.Text(String(maxHealth), style);
     healthLeft.x = 38;
     healthLeft.y = 36;
-    app.stage.addChild(healthLeft);
+    world.addChild(healthLeft);
 
     healthRight = new PIXI.Text(String(maxHealth), style);
     healthRight.x = healthBarRight.x + 7;
     healthRight.y = healthBarRight.y + 5;
-    app.stage.addChild(healthRight);
+    world.addChild(healthRight);
 
     if (window.onMobilePhone) { 
         // TODO: make a better mobile config
@@ -701,38 +730,38 @@ function showGame() {
         compileButton.anchor.y = 0.5;
         compileButton.x = windowWidth / 2;
         compileButton.y = windowHeight - 50;
-        app.stage.addChild(compileButton);
+        world.addChild(compileButton);
     
         zeroButton.anchor.x = 0.5;
         zeroButton.anchor.y = 0.5;
         zeroButton.x = windowWidth / 2 - compileButton.width / 2 - zeroButton.width / 2;
         zeroButton.y = windowHeight - 50;
-        app.stage.addChild(zeroButton);
+        world.addChild(zeroButton);
     
         oneButton.anchor.x = 0.5;
         oneButton.anchor.y = 0.5;
         oneButton.x = windowWidth / 2 + compileButton.width / 2 + zeroButton.width / 2;
         oneButton.y = windowHeight - 50;
-        app.stage.addChild(oneButton);
+        world.addChild(oneButton);
     }
     else { 
         // compileButton.anchor.x = 0.5;
         // compileButton.anchor.y = 0.5;
         // compileButton.x = windowWidth / 2;
         // compileButton.y = windowHeight - 50;
-        // app.stage.addChild(compileButton);
+        // world.addChild(compileButton);
     
         // zeroButton.anchor.x = 0.5;
         // zeroButton.anchor.y = 0.5;
         // zeroButton.x = windowWidth / 2 - compileButton.width / 2 - zeroButton.width / 2;
         // zeroButton.y = windowHeight - 50;
-        // app.stage.addChild(zeroButton);
+        // world.addChild(zeroButton);
     
         // oneButton.anchor.x = 0.5;
         // oneButton.anchor.y = 0.5;
         // oneButton.x = windowWidth / 2 + compileButton.width / 2 + zeroButton.width / 2;
         // oneButton.y = windowHeight - 50;
-        // app.stage.addChild(oneButton);
+        // world.addChild(oneButton);
     }   
     
     numberScroller.ticker = app.ticker.add(numberScroller.update.bind(numberScroller));
@@ -810,22 +839,22 @@ function hideGame() {
         codeRightInterval = null;
     }
 
-    app.stage.removeChild(healthBorderLeft);
-    app.stage.removeChild(healthBorderRight);
-    app.stage.removeChild(healthBarLeft); 
-    app.stage.removeChild(healthBarRight);
+    world.removeChild(healthBorderLeft);
+    world.removeChild(healthBorderRight);
+    world.removeChild(healthBarLeft); 
+    world.removeChild(healthBarRight);
     
     for (let i = 0; i < dartComboCount; i++) {
-        app.stage.removeChild(dartsLeft[i]);
-        app.stage.removeChild(dartsRight[i]);
+        world.removeChild(dartsLeft[i]);
+        world.removeChild(dartsRight[i]);
     }
     
-    app.stage.removeChild(zeroButton);
-    app.stage.removeChild(oneButton);
-    app.stage.removeChild(compileButton);
+    world.removeChild(zeroButton);
+    world.removeChild(oneButton);
+    world.removeChild(compileButton);
 
-    app.stage.removeChild(healthLeft);
-    app.stage.removeChild(healthRight);
+    world.removeChild(healthLeft);
+    world.removeChild(healthRight);
     
     app.ticker.remove(numberScroller.update.bind(numberScroller));
 }

@@ -4,6 +4,12 @@ let s_0_down = {
     x: 0, y:  0
 }
 
+let s_lobby = {
+    width: 1920,
+    height: 1080,
+    x: 1929, y: 531
+}
+
 let s_0_up = {
     width: 115,
     height: 116,
