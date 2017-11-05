@@ -71,9 +71,14 @@ let zeroButton = button[0];
 let oneButton = button[1];
 let compileButton = getCompileButton();
 
-let dropSound = new Howl({ src: ['media/dropped.wav'] });
-let catchSound = new Howl({ src: ['media/caught.wav'] });
-let nerfShootSound = new Howl({ src: ['media/nerf_shoot.wav'] });
+let lobbyMusic = null;
+let gameMusic = null;
+
+let gameFoundSound = null;
+let startSound = null;
+let dropSound = null;
+let catchSound = null;
+let nerfShootSound = null;
 
 let world = new PIXI.Container();
 let worldTicker = null;
@@ -138,6 +143,34 @@ function assetHasLoaded() {
 
 function preload(loader, resources) {
 
+    lobbyMusic = new Howl({ loop: true, volume: 0.4, src: ['media/lobby_music.ogg'] });
+    lobbyMusic.once('load', assetHasLoaded);
+    assetsRequested++;
+
+    gameMusic = new Howl({ loop: true, volume: 0.4, src: ['media/game_music.ogg'] });
+    gameMusic.once('load', assetHasLoaded);
+    assetsRequested++;
+
+    gameFoundSound = new Howl({ src: ['media/game_found.ogg'] });
+    gameFoundSound.once('load', assetHasLoaded);
+    assetsRequested++;
+
+    startSound = new Howl({ src: ['media/start.ogg'] });
+    startSound.once('load', assetHasLoaded);
+    assetsRequested++;
+
+    dropSound = new Howl({ src: ['media/dropped.wav'] });
+    dropSound.once('load', assetHasLoaded);
+    assetsRequested++;
+
+    catchSound = new Howl({ src: ['media/caught.wav'] });
+    catchSound.once('load', assetHasLoaded);
+    assetsRequested++;
+
+    nerfShootSound = new Howl({ src: ['media/nerf_shoot.wav'] });
+    nerfShootSound.once('load', assetHasLoaded);
+    assetsRequested++;
+    
     if (gameArguments.hasOwnProperty("i")) {
         console.log("Found invite code", gameArguments["i"]);
         gameToJoin = parseInt(gameArguments["i"]);
@@ -211,6 +244,7 @@ function addMessages() {
     let hasJoined = gameConnection.addTalkBox(2, function (game) { 
         console.log(`Received a game join! Playing against ${game.opponent}`);
 
+
         hideLobby();
         
         gameState.reset(game.numbers);
@@ -237,6 +271,7 @@ function addMessages() {
             align: "center"
         });
 
+        gameFoundSound.play();
         prepareToStartText = new PIXI.Text(`Game will start in ${time}..`, style);
         time = parseInt(time);
         prepareToStartText.x = windowWidth / 2 - prepareToStartText.width / 2;
@@ -261,6 +296,10 @@ function addMessages() {
     // Start Game
     gameConnection.addTalkBox(3, function (game) { 
         console.log(`Received a game start!`);
+
+        startSound.play();
+        lobbyMusic.stop();
+        gameMusic.play();
 
         gameState.started = true;
         removeTimer();
@@ -315,6 +354,7 @@ function addMessages() {
             computerRight.x = computerX;
             computerRight.y = computerY;
             world.addChild(computerRight);
+            world.addChild(playerLeft);
             world.addChild(playerRight);
             
             world.removeChild(codeRight);
@@ -359,6 +399,7 @@ function addMessages() {
             computerLeft.y = computerY;
             world.addChild(computerLeft);
             world.addChild(playerLeft);
+            world.addChild(playerRight);
 
             world.removeChild(codeLeft);
 
@@ -406,7 +447,7 @@ function addMessages() {
 
             setTimeout(function () { 
                 nerfShootSound.play();
-            }, 1400);
+            }, 700);
 
             if (gameState.yourState == PlayerState.Attacking) {
                 playerLeft.state.setAnimation(0, 'shoot2', false);
@@ -421,7 +462,7 @@ function addMessages() {
             console.log("We got shot at!");
             setTimeout(function () { 
                 nerfShootSound.play();
-            }, 1400);
+            }, 700);
 
             if (gameState.opponentState == PlayerState.Attacking) {
                 playerRight.state.setAnimation(0, 'shoot2', false);
@@ -686,6 +727,8 @@ function showSharedAssets() {
 
 function showLobby() {
     
+    gameMusic.stop();
+    lobbyMusic.play();
     lobbyBackground.x = -s_lobby.width;
     lobbyBackground.y = 0;
     world.addChild(lobbyBackground);
