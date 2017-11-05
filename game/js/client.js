@@ -1,12 +1,11 @@
-class GameClient extends WebSocket {
+class GameClient {
 
     constructor  (connectionUrl) {
-        super(connectionUrl);
+        this.socket = new WebSocket(connectionUrl);
 
+        this.socket.onopen = this.onConnected.bind(this);
+        this.socket.onmessage  = this.onReceive.bind(this);
         this.listeners = {};
-
-        this.onopen = this.onConnected.bind(this);
-        this.onmessage  = this.onReceive.bind(this);
     }
 
     addTalkBox(id, callback) {
@@ -46,6 +45,6 @@ class GameClient extends WebSocket {
     }
 
     send (id, json) {
-        super.send(JSON.stringify({ m: id, c: json }));
+        this.socket.send(JSON.stringify({ m: id, c: json }));
     }
 } 

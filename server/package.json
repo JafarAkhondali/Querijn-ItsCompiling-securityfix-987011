@@ -2,13 +2,13 @@
   "name": "its-compiling-server",
   "version": "0.1.0",
   "description": "The game server for 'It's Compiling!'.",
-  "main": "dist/app.js",
+  "main": "dist/compiling.js",
   "repository": {
     "url": "git@github.com:Querijn/BottyMcBotface.git",
     "type": "git"
   },
   "scripts": {
-    "start": "tsc -p . && node ./dist/app.js"
+    "start": "tsc -p . && node ./dist/compiling.js"
   },
   "author": "Querijn Heijmans <querijn@irule.at>",
   "license": "MIT",

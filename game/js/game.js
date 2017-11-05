@@ -5,7 +5,7 @@ let windowHeight = 1080;
 let dartComboCount = 8;
 let numbersOnScreenCount = 8;
 let maxHealth = 64;
-let serverURL = "ws://localhost:1345";
+let serverURL = "ws://localhost:3389";
 
 const InputType = {
     Zero: 0,
