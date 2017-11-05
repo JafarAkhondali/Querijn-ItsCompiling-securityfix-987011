@@ -122,6 +122,11 @@ class NumberScroller {
 
         if (!reason || reason === "dropped") {
             
+            // If we mistyped
+            if (reason === "dropped") {
+                this.speed += 0.3;
+            }
+
             if (sendInput && gameState.started) {
                 sendInput(InputType.Drop);
             }
@@ -130,6 +135,8 @@ class NumberScroller {
             this.dropNumbers.push(number);
         }
         else if (reason === "caught") {
+            this.speed += 0.3;
+            
             number.text.style.fill = "#00FF00";
             this.caughtNumbers.push(number);
         }
@@ -184,8 +191,6 @@ class NumberScroller {
         if (this.started !== true || this.paused === true) 
             return;
 
-
-        this.speed += delta * 0.5;
         this.timeOnNumber += delta * this.speed;
 
         // A number gets dropped
