@@ -37,7 +37,7 @@ class NumberScroller {
     }
 
     get currentNumber() {
-        return parseInt(this.numbers[0].binaryNumber);
+        return parseInt(this.numbers[7].binaryNumber);
     }
 
     add() {   
