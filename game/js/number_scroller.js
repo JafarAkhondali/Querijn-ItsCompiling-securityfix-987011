@@ -212,7 +212,7 @@ class NumberScroller {
         }
 
         let vibrateStrength = ((this.dropDelay - this.timeOnNumber) / this.dropDelay);
-        vibrateStrength = Math.min(1, 1 - (vibrateStrength * vibrateStrength));
+        vibrateStrength = Math.max(-1, Math.min(1, 1 - (vibrateStrength * vibrateStrength)));
 
         for(let i = 0; i < this.numbers.length; i++) {
             let number = this.numbers[i];

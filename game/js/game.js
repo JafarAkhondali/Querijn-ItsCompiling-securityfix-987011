@@ -71,6 +71,10 @@ let zeroButton = button[0];
 let oneButton = button[1];
 let compileButton = getCompileButton();
 
+let dropSound = new Howl({ src: ['media/dropped.wav'] });
+let catchSound = new Howl({ src: ['media/caught.wav'] });
+let nerfShootSound = new Howl({ src: ['media/nerf_shoot.wav'] });
+
 let world = new PIXI.Container();
 let worldTicker = null;
 let worldTargetX = -s_lobby.width;
@@ -291,10 +295,17 @@ function addMessages() {
         }
 
         // Update animation state
-        if (game.player.hasWon && gameState.yourState != PlayerState.Winning) {
+        if (gameState.opponentState == PlayerState.Losing) {
+            // Hack to skip lol
+        }
+        else if (game.player.hasWon && gameState.yourState != PlayerState.Winning) {
             gameState.yourPrevState = gameState.yourState;
             gameState.yourState = PlayerState.Winning;
             gameState.yourStateChanged = true;
+            
+            gameState.opponentPrevState = gameState.opponentState;
+            gameState.opponentState = PlayerState.Losing;
+            gameState.opponentStateChanged = true;
             
             let computerX = computerRight.x;
             let computerY = computerRight.y;
@@ -327,10 +338,17 @@ function addMessages() {
         }
 
         // Update opponent animation state
-        if (game.opponent.hasWon && gameState.opponentState != PlayerState.Winning) {
+        if (gameState.opponentState == PlayerState.Losing) {
+            // Hack to skip lol
+        }
+        else if (game.opponent.hasWon && gameState.opponentState != PlayerState.Winning) {
             gameState.opponentPrevState = gameState.opponentState;
             gameState.opponentState = PlayerState.Winning;
             gameState.opponentStateChanged = true;
+            
+            gameState.yourPrevState = gameState.yourState;
+            gameState.yourState = PlayerState.Losing;
+            gameState.yourStateChanged = true;
 
             let computerX = computerLeft.x;
             let computerY = computerLeft.y;
@@ -386,6 +404,10 @@ function addMessages() {
         if (isShooting) {
             console.log("We shot them!");
 
+            setTimeout(function () { 
+                nerfShootSound.play();
+            }, 1400);
+
             if (gameState.yourState == PlayerState.Attacking) {
                 playerLeft.state.setAnimation(0, 'shoot2', false);
                 playerLeft.state.addAnimation(0, 'attack', true, 0);
@@ -397,6 +419,9 @@ function addMessages() {
         }
         else { 
             console.log("We got shot at!");
+            setTimeout(function () { 
+                nerfShootSound.play();
+            }, 1400);
 
             if (gameState.opponentState == PlayerState.Attacking) {
                 playerRight.state.setAnimation(0, 'shoot2', false);
@@ -816,9 +841,11 @@ window.onkeydown = function(e) {
         if (isCorrectButton) {
             // addCode();
             numberScroller.dropNumber("caught");
+            catchSound.play();
         }
         else {
             numberScroller.dropNumber("dropped");
+            dropSound.play();
         }
     }
 }
