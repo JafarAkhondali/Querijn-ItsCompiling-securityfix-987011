@@ -11,6 +11,7 @@ const instantPlay: boolean = true;
 const startDelay: number = 8;
 const maxHealth: number = 64;
 const hertz: number = 30;
+const port: number = 3389;
 
 const server = http.createServer((req, res) => {
     res.writeHead(404);
@@ -68,6 +69,6 @@ websocketServer.on('connection', (socket: WebSocket) => {
     }
 });
 
-server.listen(1345, () => {
+server.listen(port, () => {
     console.log(`ws://localhost:${server.address().port}`);
 });
