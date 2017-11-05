@@ -630,7 +630,7 @@ function updateAnimations() {
                 
             case PlayerState.Clashing: {
                 let transitionAnimation = 'idle_to_clash';
-                let animation = 'clash';
+                let animation = 'clash_2';
 
                 if (gameState.opponentPrevState == PlayerState.Attacking) {
                     transitionAnimation = 'attack_to_clash';
