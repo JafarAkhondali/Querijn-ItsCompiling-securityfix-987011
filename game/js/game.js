@@ -20,6 +20,7 @@ const PlayerState = {
     Attacking: 1,
     Clashing: 2,
     Winning: 3,
+    Losing: 4,
 
     toString: function(state) {
         switch(state) {
@@ -29,6 +30,7 @@ const PlayerState = {
             case PlayerState.Attacking: return "PlayerState.Attacking";
             case PlayerState.Clashing: return "PlayerState.Clashing";
             case PlayerState.Winning: return "PlayerState.Winning";
+            case PlayerState.Losing: return "PlayerState.Losing";
         }
     }
 };
@@ -286,6 +288,23 @@ function addMessages() {
             gameState.yourPrevState = gameState.yourState;
             gameState.yourState = PlayerState.Winning;
             gameState.yourStateChanged = true;
+            
+            let computerX = computerRight.x;
+            let computerY = computerRight.y;
+            app.stage.removeChild(computerRight);
+
+            computerRight = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu2_bsod.x, s_cpu2_bsod.y, s_cpu2_bsod.width, s_cpu2_bsod.height)));
+            computerRight.x = computerX;
+            computerRight.x = computerY;
+            app.stage.addChild(computerRight);
+            
+            app.stage.removeChild(codeRight);
+
+            hideGame();
+            showLobby();
+            
+            lobbyTitle.text = 'You have won! Congratulations!';
+            lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
         }
         else if (game.player.isAttacking && gameState.yourState != PlayerState.Attacking) {
             gameState.yourPrevState = gameState.yourState;
@@ -303,6 +322,22 @@ function addMessages() {
             gameState.opponentPrevState = gameState.opponentState;
             gameState.opponentState = PlayerState.Winning;
             gameState.opponentStateChanged = true;
+
+            let computerX = computerLeft.x;
+            let computerY = computerLeft.y;
+            app.stage.removeChild(computerLeft);
+
+            computerLeft = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu1_bsod.x, s_cpu1_bsod.y, s_cpu1_bsod.width, s_cpu1_bsod.height)));
+            computerLeft.x = computerX;
+            computerLeft.x = computerY;
+            app.stage.addChild(computerLeft);
+            app.stage.removeChild(codeLeft);
+
+            hideGame();
+            showLobby();
+
+            lobbyTitle.text = 'You lost. Well, at least you gave it your best.';
+            lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
         }
         else if (game.opponent.isAttacking && gameState.opponentState != PlayerState.Attacking) {
             gameState.opponentPrevState = gameState.opponentState;
@@ -377,6 +412,7 @@ function updateAnimations() {
 
         console.log(`You are now ${PlayerState.toString(gameState.yourState)}. Previous: ${PlayerState.toString(gameState.yourPrevState)}`);
         switch (gameState.yourState) {
+            case PlayerState.Losing:
             case PlayerState.Idle: {
                 let transitionAnimation = 'idle';
                 let animation = 'idle';
@@ -423,6 +459,27 @@ function updateAnimations() {
                 playerLeft.state.addAnimation(0, animation, true, 0);
                 break;
             }
+
+            case PlayerState.Winning: {
+                let transitionAnimation = 'idle';
+                let animation = 'win';
+
+                if (gameState.yourPrevState == PlayerState.Clashing) {
+                    transitionAnimation = 'clash_to_idle';
+                }
+                else if (gameState.yourPrevState == PlayerState.Attacking) {
+                    transitionAnimation = 'attack_to_idle';
+                }
+
+                if (transitionAnimation != 'idle') {
+                    playerLeft.state.setAnimation(0, transitionAnimation, false);
+                    playerLeft.state.addAnimation(0, animation, true, 0);
+                }
+                else {
+                    playerLeft.state.setAnimation(0, animation, true);
+                }
+                break;
+            }
         }
     }
 
@@ -431,6 +488,7 @@ function updateAnimations() {
 
         console.log(`Opponent is now ${PlayerState.toString(gameState.opponentState)}. Previous: ${PlayerState.toString(gameState.opponentPrevState)}`);
         switch (gameState.opponentState) {
+            case PlayerState.Losing:
             case PlayerState.Idle: {
                 let transitionAnimation = 'idle';
                 let animation = 'idle';
@@ -475,6 +533,27 @@ function updateAnimations() {
 
                 playerRight.state.setAnimation(0, transitionAnimation, false);
                 playerRight.state.addAnimation(0, animation, true, 0);
+                break;
+            }
+            
+            case PlayerState.Winning: {
+                let transitionAnimation = 'idle';
+                let animation = 'win';
+
+                if (gameState.opponentPrevState == PlayerState.Clashing) {
+                    transitionAnimation = 'clash_to_idle';
+                }
+                else if (gameState.opponentPrevState == PlayerState.Attacking) {
+                    transitionAnimation = 'attack_to_idle';
+                }
+
+                if (transitionAnimation != 'idle') {
+                    playerRight.state.setAnimation(0, transitionAnimation, false);
+                    playerRight.state.addAnimation(0, animation, true, 0);
+                }
+                else {
+                    playerRight.state.setAnimation(0, animation, true);
+                }
                 break;
             }
         }
@@ -744,6 +823,9 @@ function hideGame() {
     app.stage.removeChild(zeroButton);
     app.stage.removeChild(oneButton);
     app.stage.removeChild(compileButton);
+
+    app.stage.removeChild(healthLeft);
+    app.stage.removeChild(healthRight);
     
     app.ticker.remove(numberScroller.update.bind(numberScroller));
 }

@@ -178,18 +178,15 @@ export class Game {
                 opponent.health -= player.dps * (delta);
             }
 
-            player.send(new PlayerUpdate(player.isAttacking,    player.health,      player.combo,   opponent.health <= 0, 
-                                        opponent.isAttacking,   opponent.health,    opponent.combo, player.health <= 0));
-
-            // If we've won, don't update the other player.
+            // If we've won, don't update the player.
             if (opponent.health <= 0) {
                 console.log("Game over by death!");
                 this.setWinner(j, "Death");
-                if (j == 0) opponent.send(new PlayerUpdate(opponent.isAttacking,    opponent.health,        opponent.combo,   opponent.health <= 0, 
-                                                            player.isAttacking,     player.health,          player.combo,     player.health <= 0));
                 return;
             }
-            
+
+            player.send(new PlayerUpdate(player.isAttacking,    player.health,      player.combo,   opponent.health <= 0, 
+                                        opponent.isAttacking,   opponent.health,    opponent.combo, player.health <= 0));
         }
     }
 
@@ -212,6 +209,18 @@ export class Game {
 
         this.clearTimeouts();
         console.log(`Player ${this.players[index].identifier.c} won! Reason: ${reason}`);
+
+        
+        let player = this.players[index];
+        let opponent = this.players[(index + 1) % 2];
+
+        player.send(new PlayerUpdate(player.isAttacking,    player.health,    player.combo,   true, 
+                                    opponent.isAttacking,   opponent.health,  opponent.combo, false));
+        opponent.send(new PlayerUpdate(opponent.isAttacking,  opponent.health,  opponent.combo,   false, 
+                                    player.isAttacking,     player.health,    player.combo, true));
+
+        player.kill();
+        opponent.kill();
     }
 
     public get participants() : Player[] {

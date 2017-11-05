@@ -67,4 +67,11 @@ export class Player {
 
         this.send(new ShootDart(isShooting));
     }
+
+    public kill() {
+        if (this.socket.readyState !== WebSocket.OPEN) 
+            return;
+            
+        this.socket.close();
+    }
 }
