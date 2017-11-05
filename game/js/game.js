@@ -35,9 +35,9 @@ const PlayerState = {
 
 let gameState = {
 
-    reset: function(seed) {
+    reset: function(numbers) {
         this.started = false;
-        this.seed = seed;
+        this.numbers = numbers;
 
         this.yourPrevState = PlayerState.None;
         this.yourState = PlayerState.Idle;
@@ -196,11 +196,11 @@ function addMessages() {
 
     // On Game Join
     let hasJoined = gameConnection.addTalkBox(2, function (game) { 
-        console.log(`Received a game join! Playing against ${game.opponent} with seed ${game.seed}`);
+        console.log(`Received a game join! Playing against ${game.opponent}`);
 
         hideLobby();
         
-        gameState.reset(game.seed);
+        gameState.reset(game.numbers);
         showGame();
 
         hasJoined(game.opponent);
@@ -333,6 +333,24 @@ function addMessages() {
             dartsRight[i].alpha = (i < game.opponent.darts) ? 1.0 : 0.5;
         }
     });
+
+    // Shoot dart
+    gameConnection.addTalkBox(11, function (isShooting) { 
+        if (isShooting) {
+            console.log("We shot them!");
+
+            if (gameState.yourState == PlayerState.Attacking)
+                playerLeft.state.setAnimation(0, 'shoot2');
+            else playerLeft.state.setAnimation(0, 'shoot2');
+        }
+        else { 
+            console.log("We got shot at!");
+
+            if (gameState.opponentState == PlayerState.Attacking)
+                playerRight.state.setAnimation(0, 'shoot2');
+            else playerRight.state.setAnimation(0, 'shoot2');
+        }
+    });
 }
 
 function updateAnimations() {
@@ -408,6 +426,60 @@ function updateAnimations() {
         }
     }
 
+    if (gameState.opponentStateChanged == true) {
+        gameState.opponentStateChanged = false;
+
+        console.log(`Opponent is now ${PlayerState.toString(gameState.opponentState)}. Previous: ${PlayerState.toString(gameState.opponentPrevState)}`);
+        switch (gameState.opponentState) {
+            case PlayerState.Idle: {
+                let transitionAnimation = 'idle';
+                let animation = 'idle';
+
+                if (gameState.opponentPrevState == PlayerState.Clashing) {
+                    transitionAnimation = 'clash_to_idle';
+                }
+                else if (gameState.opponentPrevState == PlayerState.Attacking) {
+                    transitionAnimation = 'attack_to_idle';
+                }
+
+                if (transitionAnimation != 'idle') {
+                    playerRight.state.setAnimation(0, transitionAnimation, false);
+                    playerRight.state.addAnimation(0, animation, true, 0);
+                }
+                else {
+                    playerRight.state.setAnimation(0, animation, true);
+                }
+                break;
+            }
+
+            case PlayerState.Attacking: {
+                let transitionAnimation = 'idle_to_attack';
+                let animation = 'attack';
+
+                if (gameState.opponentPrevState == PlayerState.Clashing) {
+                    transitionAnimation = 'clash_to_attack';
+                }
+
+                playerRight.state.setAnimation(0, transitionAnimation, false);
+                playerRight.state.addAnimation(0, animation, true, 0);
+                break;
+            }
+                
+            case PlayerState.Clashing: {
+                let transitionAnimation = 'idle_to_clash';
+                let animation = 'clash';
+
+                if (gameState.opponentPrevState == PlayerState.Attacking) {
+                    transitionAnimation = 'attack_to_clash';
+                }
+
+                playerRight.state.setAnimation(0, transitionAnimation, false);
+                playerRight.state.addAnimation(0, animation, true, 0);
+                break;
+            }
+        }
+    }
+
 };
 
 function showSharedAssets() {
@@ -469,7 +541,8 @@ function showSharedAssets() {
     playerRight = new PIXI.spine.Spine(loaderAssets.player.spineData);
     app.stage.addChild(playerRight);
     playerRight.state.setAnimation(0, 'idle', true);
-    playerRight.x = 1520;
+    playerRight.scale.x = -1;
+    playerRight.x = 1360;
     playerRight.y = 1215;
 
     app.ticker.add(updateAnimations);
@@ -494,8 +567,8 @@ function hideLobby() {
 }
 
 function showGame() { 
+    numberScroller.setNumbers(gameState.numbers);
     numberScroller.add();
-    numberScroller.setSeed(gameState.seed);
 
     healthBorderLeft.x = 20;
     healthBorderLeft.y = 20;

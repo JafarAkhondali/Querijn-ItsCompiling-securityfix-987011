@@ -1,6 +1,7 @@
 import * as WebSocket from 'ws';
 
 import { Identifier } from './messages/identifier';
+import { ShootDart } from './messages/shoot_dart';
 
 export class Player {
     socket: WebSocket;
@@ -60,5 +61,10 @@ export class Player {
     public sendIdentity() {
 
         this.send(this.identifier);
+    }
+
+    public shootDart(isShooting: boolean) {
+
+        this.send(new ShootDart(isShooting));
     }
 }

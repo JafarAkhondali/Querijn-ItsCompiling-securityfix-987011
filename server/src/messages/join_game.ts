@@ -1,10 +1,10 @@
 export class JoinGameMessage {
 
-    public seed: number;
+    public numbers: number[];
     public opponent: string;
 
-    constructor(seed: number, opponentName: string) {
-        this.seed = seed;
+    constructor(numbers: number[], opponentName: string) {
+        this.numbers = numbers;
         this.opponent = opponentName;
     }
 }
@@ -15,9 +15,9 @@ export class JoinGame {
     m: string;
     c: JoinGameMessage;
 
-    constructor(seed: number, opponentName: string) {
+    constructor(numbers: number[], opponentName: string) {
         this.m = String(JoinGame.id);
 
-        this.c = new JoinGameMessage(seed, opponentName);
+        this.c = new JoinGameMessage(numbers, opponentName);
     }
 }

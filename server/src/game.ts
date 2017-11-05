@@ -70,8 +70,8 @@ export class Game {
             this.checkStart();
         }.bind(this));
 
-        player1.send(new JoinGame(seed, "Player2"));
-        player2.send(new JoinGame(seed, "Player1"));
+        player1.send(new JoinGame(this.numbers, "Player2"));
+        player2.send(new JoinGame(this.numbers, "Player1"));
 
         for (let i = 0; i < this.players.length; i++) {
             let player = this.players[i];
@@ -112,12 +112,23 @@ export class Game {
                         if (number == input) {
                             player.correct += 1;
                             player.combo++;
-                            console.log(`Player ${player.identifier.c} got one: correct = ${player.correct}`);
+
+                            if (player.combo == 8) {
+                                player.combo = 0;
+                                
+                                player.shootDart(true);
+                                
+                                let opponent = this.players[(i + 1) % 2];
+                                opponent.shootDart(false);
+                            }
                         }
                         else {
                             player.correct = Math.max(player.correct - 1, 0);
                             player.combo = 0;
-                            console.log(`Player ${player.identifier.c} missed one: correct = ${player.correct}`);
+                        }
+                        
+                        if (i == 0) {
+                            console.log(`Player ${player.identifier.c} played ${input}, should've been ${number}: correct = ${player.correct}`);
                         }
                         break;
 
@@ -125,7 +136,6 @@ export class Game {
                         // Drop a number
                         player.currentNumber++;
                         player.correct = Math.max(player.correct - 0.5, 0);
-                        console.log(`Player ${player.identifier.c} dropped one: correct = ${player.correct}`);
                         break;
                 };
             }.bind(this, player));

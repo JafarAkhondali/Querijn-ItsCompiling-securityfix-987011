@@ -6,9 +6,10 @@ class NumberScroller {
 
         this.started = false;
         this.paused = false;
+        this.added = false;
 
-        this.seed = 0;
-        this.rand = null;
+        this.randoms = [];
+        this.iterator = 0;
         
         this.speed = 1;
         this.timeOnNumber = 0;
@@ -40,14 +41,19 @@ class NumberScroller {
     }
 
     add() {   
+        if (this.added)
+            return;
+
+        this.added = true;
 
         for(let i = 0; i < this.numberCount; i++) {
 
-            this.createNumber("1", true);
+            this.createNumber(this.nextBinary());
         }
     }
     
     remove() {
+        this.added = false;
         for(let i = 0; i < this.numberCount; i++) {
             app.stage.removeChild(this.numbers[i].text);
         }
@@ -86,7 +92,7 @@ class NumberScroller {
 
     createNumber(value, push) { 
         
-        let fontSize = this.numberPositions[push ? this.numberPositions.length - 1 : 0].size;
+        let fontSize = this.numberPositions[0].size;
 
         let style = new PIXI.TextStyle({
             fontFamily: 'xkcd-script',
@@ -141,11 +147,14 @@ class NumberScroller {
             this.caughtNumbers.push(number);
         }
 
-        this.createNumber(this.rand.nextBinary());
+        this.createNumber(this.nextBinary());
+    }
+
+    nextBinary() {
+        return this.randoms[this.iterator++];
     }
 
     update() {
-
         let delta = this.ticker.elapsedMS / 1000;
         for(let i = 0; i < this.dropNumbers.length; i++) {
             let number = this.dropNumbers[i];
@@ -222,14 +231,7 @@ class NumberScroller {
         }
     }
 
-    setSeed(number) {
-        this.seed = number;
-        this.rand = new Random(number);
-        
-        for(let i = 0; i < this.numbers.length; i++) {
-            let number = this.numbers[i];
-            
-            number.binaryNumber = String(this.rand.nextBinary());
-        }
+    setNumbers(numbers) {
+        this.randoms = numbers;
     }
 }
