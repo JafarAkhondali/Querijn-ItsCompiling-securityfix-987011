@@ -44,7 +44,7 @@ export class Game {
         this.players.push(player1);
         this.players.push(player2);
 
-        this.damageModifier = Math.random() * 0.4 + 0.8;
+        this.damageModifier = Math.random() * 0.3 + 0.3;
         console.log(`Damage modifier = ${this.damageModifier}`);
 
         let seed = Math.floor(Math.random() * 123123123);
@@ -115,6 +115,8 @@ export class Game {
 
                             if (player.combo == 8) {
                                 player.combo = 0;
+
+                                console.log("Shooting a dart!");
                                 
                                 player.shootDart(true);
                                 

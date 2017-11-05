@@ -196,10 +196,10 @@ function addMessages() {
             lobbyTitle.x = -s_lobby.width +  windowWidth / 2 - lobbyTitle.width / 2;
         }
         else {
-            lobbyTitle.text = 'We are connected to the server!\n\nGot a friend? Send them your URL to play with them! (' + window.location + ')';
-            lobbyTitle.x = -s_lobby.width + windowWidth / 2 - lobbyTitle.width / 2;
-
             window.history.pushState(suggestedCode, suggestedCode, `?i=${suggestedCode}`);
+
+            lobbyTitle.text = 'We are connected to the server!\nGot a friend? Send them your URL to play with them!\n(' + window.location.href + ')';
+            lobbyTitle.x = -s_lobby.width + windowWidth / 2 - lobbyTitle.width / 2;
         }
     });
 
@@ -386,16 +386,26 @@ function addMessages() {
         if (isShooting) {
             console.log("We shot them!");
 
-            if (gameState.yourState == PlayerState.Attacking)
-                playerLeft.state.setAnimation(0, 'shoot2');
-            else playerLeft.state.setAnimation(0, 'shoot2');
+            if (gameState.yourState == PlayerState.Attacking) {
+                playerLeft.state.setAnimation(0, 'shoot2', false);
+                playerLeft.state.addAnimation(0, 'attack', true, 0);
+            }
+            else { 
+                playerLeft.state.setAnimation(0, 'shoot');
+                playerLeft.state.addAnimation(0, 'idle', true, 0);
+            }
         }
         else { 
             console.log("We got shot at!");
 
-            if (gameState.opponentState == PlayerState.Attacking)
-                playerRight.state.setAnimation(0, 'shoot2');
-            else playerRight.state.setAnimation(0, 'shoot2');
+            if (gameState.opponentState == PlayerState.Attacking) {
+                playerRight.state.setAnimation(0, 'shoot2', false);
+                playerRight.state.addAnimation(0, 'attack', true, 0);
+            }
+            else { 
+                playerRight.state.setAnimation(0, 'shoot');
+                playerRight.state.addAnimation(0, 'idle', true, 0);
+            }
         }
     });
 }
@@ -831,7 +841,6 @@ window.onkeyup = function(e) {
 
 
 function hideGame() {
-
     numberScroller.pause();
     numberScroller.remove();
 

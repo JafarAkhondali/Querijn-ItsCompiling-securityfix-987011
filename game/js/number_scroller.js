@@ -22,12 +22,12 @@ class NumberScroller {
         this.dropNumbers = [];
         this.caughtNumbers = [];
         
-        let sizeTotal = 800;
+        let sizeTotal = 100;
 
         for(let i = 0; i < this.numberCount; i++) {
-            let fontSize = 36 * ((i + 5) * 0.23);
+            let fontSize = 36 * (((7 - i) + 5) * 0.23);
             
-            sizeTotal -= fontSize;
+            sizeTotal += fontSize;
 
             this.numberPositions.push({
                 y: sizeTotal,
@@ -37,7 +37,7 @@ class NumberScroller {
     }
 
     get currentNumber() {
-        return parseInt(this.numbers[this.numbers.length - 1].binaryNumber);
+        return parseInt(this.numbers[0].binaryNumber);
     }
 
     add() {   
@@ -116,6 +116,7 @@ class NumberScroller {
     }
 
     dropNumber(reason) {
+        if (!reason) return; 
 
         this.timeOnNumber = 0;
         let number = this.numbers.splice(this.numbers.length - 1, 1)[0];
@@ -126,7 +127,7 @@ class NumberScroller {
         number.text.text = number.binaryNumber;
         number.text.x = windowWidth / 2;
 
-        if (!reason || reason === "dropped") {
+        if (reason === "dropped") {
             
             // If we mistyped
             if (reason === "dropped") {
@@ -151,7 +152,10 @@ class NumberScroller {
     }
 
     nextBinary() {
-        return this.randoms[this.iterator++];
+        let newNumber = this.randoms[this.iterator];
+        this.iterator++;
+        
+        return newNumber;
     }
 
     update() {
@@ -212,14 +216,14 @@ class NumberScroller {
 
         for(let i = 0; i < this.numbers.length; i++) {
             let number = this.numbers[i];
-            let numberPosition = this.numberPositions[i];
+            let numberPosition = this.numberPositions[7 - i];
 
-            if (i == this.numbers.length - 1) {
+            if (i == 7) {
                 number.text.text = "[ " + number.binaryNumber + " ]";
                 number.text.x = windowWidth / 2 - number.text.width / 2;
 
                 number.vibro = !number.vibro ? true : false;
-                number.text.x += (number.vibro ? -3 : 3) * vibrateStrength;
+                number.text.x += (number.vibro ? -3 : 3) * Math.min(vibrateStrength, 1);
             }
             else { 
                 number.text.text = number.binaryNumber;
