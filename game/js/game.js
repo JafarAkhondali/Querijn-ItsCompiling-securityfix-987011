@@ -295,7 +295,7 @@ function addMessages() {
 
             computerRight = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu2_bsod.x, s_cpu2_bsod.y, s_cpu2_bsod.width, s_cpu2_bsod.height)));
             computerRight.x = computerX;
-            computerRight.x = computerY;
+            computerRight.y = computerY;
             app.stage.addChild(computerRight);
             
             app.stage.removeChild(codeRight);
@@ -329,7 +329,7 @@ function addMessages() {
 
             computerLeft = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu1_bsod.x, s_cpu1_bsod.y, s_cpu1_bsod.width, s_cpu1_bsod.height)));
             computerLeft.x = computerX;
-            computerLeft.x = computerY;
+            computerLeft.y = computerY;
             app.stage.addChild(computerLeft);
             app.stage.removeChild(codeLeft);
 
