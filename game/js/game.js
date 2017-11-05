@@ -7,26 +7,51 @@ let numbersOnScreenCount = 8;
 let maxHealth = 64;
 let serverURL = "ws://localhost:1345";
 
-let gameState = {
-
-    reset: function(seed) {
-        this.started = false;
-        this.seed = seed;
-
-        this.yourHealth = maxHealth;
-        this.yourDarts = 0;
-
-        this.opponentHealth = maxHealth;
-        this.opponentDarts = 0;
-    }
-}
-
 const InputType = {
     Zero: 0,
     One: 1,
     Compile: 2,
     Drop: 3
 };
+
+const PlayerState = {
+    None: -1,
+    Idle: 0,
+    Attacking: 1,
+    Clashing: 2,
+    Winning: 3,
+
+    toString: function(state) {
+        switch(state) {
+            default:
+            case PlayerState.None: return "PlayerState.None";
+            case PlayerState.Idle: return "PlayerState.Idle";
+            case PlayerState.Attacking: return "PlayerState.Attacking";
+            case PlayerState.Clashing: return "PlayerState.Clashing";
+            case PlayerState.Winning: return "PlayerState.Winning";
+        }
+    }
+};
+
+let gameState = {
+
+    reset: function(seed) {
+        this.started = false;
+        this.seed = seed;
+
+        this.yourPrevState = PlayerState.None;
+        this.yourState = PlayerState.Idle;
+        this.yourStateChanged = true;
+        this.yourHealth = maxHealth;
+        this.yourDarts = 0;
+
+        this.opponentPrevState = PlayerState.None;
+        this.opponentState = PlayerState.Idle;
+        this.opponentStateChanged = true;
+        this.opponentHealth = maxHealth;
+        this.opponentDarts = 0;
+    }
+}
 
 let app = new PIXI.Application(windowWidth, windowHeight, { backgroundColor: 0xFFFFFF });
 let gameSprites = PIXI.BaseTexture.fromImage("media/game.png");
@@ -70,6 +95,9 @@ let getCode = function(offset) { let code = ""; for (var i = 0; i < 10; i++) cod
 let lobbyTitle = null;
 let prepareToStartText = null;
 
+let playerLeft = null;
+let playerRight = null;
+
 let getNerfDart = function() { return PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_nerf_dart.x, s_nerf_dart.y, s_nerf_dart.width, s_nerf_dart.height))); };
 let dartsLeft = [];
 let dartsRight = [];
@@ -82,6 +110,8 @@ let gameConnection = null;
 let sendInput = null;
 let waitForUp = false;
 
+let loaderAssets = null;
+
 function assetHasLoaded() { 
     assetsLoaded++;
 
@@ -91,7 +121,9 @@ function assetHasLoaded() {
     }
 }
 
-function preload() {
+function preload(loader, resources) {
+
+    loaderAssets = resources;
 
     let font = new Font();
     font.onload = assetHasLoaded;
@@ -224,6 +256,40 @@ function addMessages() {
             numberScroller.unpause();
         }
 
+        // Update animation state
+        if (game.player.hasWon && gameState.yourState != PlayerState.Winning) {
+            gameState.yourPrevState = gameState.yourState;
+            gameState.yourState = PlayerState.Winning;
+            gameState.yourStateChanged = true;
+        }
+        else if (game.player.isAttacking && gameState.yourState != PlayerState.Attacking) {
+            gameState.yourPrevState = gameState.yourState;
+            gameState.yourState = PlayerState.Attacking;
+            gameState.yourStateChanged = true;
+        }
+        else if (game.player.isAttacking == false && gameState.yourState != PlayerState.Idle) {
+            gameState.yourPrevState = gameState.yourState;
+            gameState.yourState = PlayerState.Idle;
+            gameState.yourStateChanged = true;
+        }
+
+        // Update opponent animation state
+        if (game.opponent.hasWon && gameState.opponentState != PlayerState.Winning) {
+            gameState.opponentPrevState = gameState.opponentState;
+            gameState.opponentState = PlayerState.Winning;
+            gameState.opponentStateChanged = true;
+        }
+        else if (game.opponent.isAttacking && gameState.opponentState != PlayerState.Attacking) {
+            gameState.opponentPrevState = gameState.opponentState;
+            gameState.opponentState = PlayerState.Attacking;
+            gameState.opponentStateChanged = true;
+        }
+        else if (game.opponent.isAttacking == false && gameState.opponentState != PlayerState.Idle) {
+            gameState.opponentPrevState = gameState.opponentState;
+            gameState.opponentState = PlayerState.Idle;
+            gameState.opponentStateChanged = true;
+        }
+
         gameState.yourHealth = game.player.health;
         gameState.yourDarts = game.player.darts;
         gameState.opponentHealth = game.opponent.health;
@@ -243,6 +309,81 @@ function addMessages() {
         }
     });
 }
+
+function updateAnimations() {
+    
+    if (!gameState || !playerLeft || !playerRight) return;
+
+    // If both are attacking, both are clashing
+    if (gameState.yourState == PlayerState.Attacking && gameState.opponentState == PlayerState.Attacking) {
+
+        console.log("Clash detected!");
+
+        gameState.yourPrevState = gameState.yourState;
+        gameState.yourState = PlayerState.Clashing;
+        gameState.yourStateChanged = true;
+
+        gameState.opponentPrevState = gameState.opponentState;
+        gameState.opponentState = PlayerState.Clashing;
+        gameState.opponentStateChanged = true;
+    }
+
+
+    if (gameState.yourStateChanged == true) {
+        gameState.yourStateChanged = false;
+
+        console.log(`You are now ${PlayerState.toString(gameState.yourState)}. Previous: ${PlayerState.toString(gameState.yourPrevState)}`);
+        switch (gameState.yourState) {
+            case PlayerState.Idle: {
+                let transitionAnimation = 'idle';
+                let animation = 'idle';
+
+                if (gameState.yourPrevState == PlayerState.Clashing) {
+                    transitionAnimation = 'clash_to_idle';
+                }
+                else if (gameState.yourPrevState == PlayerState.Attacking) {
+                    transitionAnimation = 'attack_to_idle';
+                }
+
+                if (transitionAnimation != 'idle') {
+                    playerLeft.state.setAnimation(0, transitionAnimation, false);
+                    playerLeft.state.addAnimation(0, animation, true, 0);
+                }
+                else {
+                    playerLeft.state.setAnimation(0, animation, true);
+                }
+                break;
+            }
+
+            case PlayerState.Attacking: {
+                let transitionAnimation = 'idle_to_attack';
+                let animation = 'attack';
+
+                if (gameState.yourPrevState == PlayerState.Clashing) {
+                    transitionAnimation = 'clash_to_attack';
+                }
+
+                playerLeft.state.setAnimation(0, transitionAnimation, false);
+                playerLeft.state.addAnimation(0, animation, true, 0);
+                break;
+            }
+                
+            case PlayerState.Clashing: {
+                let transitionAnimation = 'idle_to_clash';
+                let animation = 'clash';
+
+                if (gameState.yourPrevState == PlayerState.Attacking) {
+                    transitionAnimation = 'attack_to_clash';
+                }
+
+                playerLeft.state.setAnimation(0, transitionAnimation, false);
+                playerLeft.state.addAnimation(0, animation, true, 0);
+                break;
+            }
+        }
+    }
+
+};
 
 function showSharedAssets() {
     
@@ -293,6 +434,20 @@ function showSharedAssets() {
     codeRight.mask.lineTo(1730, 400);
     codeRight.mask.lineTo(1725, 670);
     codeRight.mask.lineTo(1210, 670);
+    
+    playerLeft = new PIXI.spine.Spine(loaderAssets.player.spineData);
+    app.stage.addChild(playerLeft);
+    playerLeft.state.setAnimation(0, 'idle', true);
+    playerLeft.x = 520;
+    playerLeft.y = 1215;
+
+    playerRight = new PIXI.spine.Spine(loaderAssets.player.spineData);
+    app.stage.addChild(playerRight);
+    playerRight.state.setAnimation(0, 'idle', true);
+    playerRight.x = 1520;
+    playerRight.y = 1215;
+
+    app.ticker.add(updateAnimations);
 }
 
 function showLobby() {
@@ -495,11 +650,16 @@ function hideGame() {
     app.ticker.remove(numberScroller.update.bind(numberScroller));
 }
 
+// Load pixi stuff and continue to our own assets
+function loadPIXI() {
+    PIXI.loader.add('player', 'media/Player.json').load(preload);
+}
+
 if (document.addEventListener)
-    document.addEventListener("DOMContentLoaded", preload, false);
+    document.addEventListener("DOMContentLoaded", loadPIXI, false);
 else if (document.attachEvent)
-    document.attachEvent("onreadystatechange", preload);
-else window.onload = preload;
+    document.attachEvent("onreadystatechange", loadPIXI);
+else window.onload = loadPIXI;
 
 window.onresize = function (event) {
 

@@ -24,7 +24,7 @@ export class Player {
         this.socket.on('message', this.onReceive.bind(this));
 
         this.addListener(1, function (id: string) { 
-            this.hasJoined = true;//parseInt(id) == this.identifier.c;
+            this.hasJoined = true;//id == this.identifier.c;
         }.bind(this));
     }
 
