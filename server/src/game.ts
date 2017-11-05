@@ -1,7 +1,7 @@
 import { Random } from './random';
 import { Player } from './player';
 
-import { Join } from './messages/join';
+import { JoinGame } from './messages/join_game';
 import { Start, PrepareStart } from './messages/start';
 import { Input, InputType } from './messages/input';
 import { PlayerUpdate } from './messages/player_update';
@@ -19,9 +19,13 @@ export class Game {
     attackTimeout: (NodeJS.Timer|null)[] = [ null, null ];
     updateInterval: NodeJS.Timer|null = null;
 
+    gameOver: boolean = false;
+
     constructor(hertz: number, maxHealth: number, startDelay: number, player1 : Player, player2 : Player) {
         this.startDelay = startDelay;
         this.hertz = hertz;
+
+        this.gameOver = false;
 
         player1.health = maxHealth;
         player1.currentNumber = 0;
@@ -50,7 +54,7 @@ export class Game {
             this.numbers.push(this.random.nextBinary());
         }
 
-        player1.addListener(Join.id, function () {
+        player1.addListener(JoinGame.id, function () {
             if (player1.isInGame) return;
 
             player1.isInGame = true;
@@ -58,7 +62,7 @@ export class Game {
             this.checkStart();
         }.bind(this));
 
-        player2.addListener(Join.id, function () {
+        player2.addListener(JoinGame.id, function () {
             if (player2.isInGame) return;
 
             player2.isInGame = true;
@@ -66,8 +70,8 @@ export class Game {
             this.checkStart();
         }.bind(this));
 
-        player1.send(new Join(seed, "Player2"));
-        player2.send(new Join(seed, "Player1"));
+        player1.send(new JoinGame(seed, "Player2"));
+        player2.send(new JoinGame(seed, "Player1"));
 
         for (let i = 0; i < this.players.length; i++) {
             let player = this.players[i];
@@ -108,10 +112,12 @@ export class Game {
                         if (number == input) {
                             player.correct += 1;
                             player.combo++;
+                            console.log(`Player ${player.identifier.c} got one: correct = ${player.correct}`);
                         }
                         else {
                             player.correct = Math.max(player.correct - 1, 0);
                             player.combo = 0;
+                            console.log(`Player ${player.identifier.c} missed one: correct = ${player.correct}`);
                         }
                         break;
 
@@ -119,6 +125,7 @@ export class Game {
                         // Drop a number
                         player.currentNumber++;
                         player.correct = Math.max(player.correct - 0.5, 0);
+                        console.log(`Player ${player.identifier.c} dropped one: correct = ${player.correct}`);
                         break;
                 };
             }.bind(this, player));
@@ -188,8 +195,10 @@ export class Game {
     }
 
     public setWinner(index: number, reason: string) {
-        if (index !== 1 && index !== 0) 
+        if ((index !== 1 && index !== 0) || this.gameOver) 
             return;
+
+        this.gameOver = true;
 
         this.clearTimeouts();
         console.log(`Player ${this.players[index].identifier.c} won! Reason: ${reason}`);

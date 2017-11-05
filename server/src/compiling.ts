@@ -6,8 +6,10 @@ import { Game } from './game';
 
 import { Identifier } from './messages/identifier';
 
+import { RequestGameJoin } from './messages/request_join';
+
 // Settings
-const instantPlay: boolean = true;
+const instantPlay: boolean = false;
 const startDelay: number = 8;
 const maxHealth: number = 64;
 const hertz: number = 30;
@@ -28,6 +30,44 @@ websocketServer.on('connection', (socket: WebSocket) => {
 
     let player = new Player(socket);
     console.log(`New player (${player.identifier.c}) has joined, sending him an invite code.`);
+
+
+    player.addListener(RequestGameJoin.id, function (ident: number) {
+        if (player.isInGame) return;
+
+        for (let i = 0; i < lobbyPlayers.length; i++) {
+            if (parseInt(lobbyPlayers[i].identifier.c) !== ident)
+                continue;
+
+            if (lobbyPlayers[i].isInGame) {
+                player.sendIdentity();
+                break;
+            }
+            
+            let playerOne = lobbyPlayers[i];
+            let playerTwo = player;
+
+            // Remove first player
+            lobbyPlayers.splice(i, 1);
+            
+            // Find second player
+            let index = lobbyPlayers.indexOf(playerTwo);
+            if (index < 0) {
+                player.sendIdentity();
+                break;
+            } 
+
+            // Remove second player.
+            lobbyPlayers.splice(index, 1);
+
+            games.push(new Game(hertz, maxHealth, startDelay, playerOne, playerTwo));
+            return;
+        }
+        
+        // Finding a player has failed - resend invite code.
+        player.sendIdentity();
+
+    }.bind(player));
 
     // Make sure the player is removed everywhere when he disconnects.
     socket.on('close', function() {

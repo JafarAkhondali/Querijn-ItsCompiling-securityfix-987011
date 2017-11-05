@@ -53,6 +53,7 @@ let gameState = {
     }
 }
 
+var gameArguments = { };
 let app = new PIXI.Application(windowWidth, windowHeight, { backgroundColor: 0xFFFFFF });
 let gameSprites = PIXI.BaseTexture.fromImage("media/game.png");
 let assetsRequested = 0;
@@ -107,6 +108,7 @@ for (let i = 0; i < dartComboCount; i++) {
 }
 
 let gameConnection = null;
+let gameToJoin = null;
 let sendInput = null;
 let waitForUp = false;
 
@@ -122,6 +124,15 @@ function assetHasLoaded() {
 }
 
 function preload(loader, resources) {
+
+    if (gameArguments.hasOwnProperty("i")) {
+        console.log("Found invite code", gameArguments["i"]);
+        gameToJoin = parseInt(gameArguments["i"]);
+    }
+    else { 
+        console.log("No invite code found");
+        gameToJoin = 0;
+    }
 
     loaderAssets = resources;
 
@@ -168,10 +179,19 @@ function addMessages() {
         inviteCode = suggestedCode;
         hasReceivedInviteCode(suggestedCode);
 
-        lobbyTitle.text = 'We are connected to the server!\n\nGot a friend?\nSend them your URL to play with them!';
-        lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
+        if (gameToJoin) {
+            sendJoinRequest(gameToJoin);
+            gameToJoin = 0;
 
-        window.history.pushState(suggestedCode, suggestedCode, `?i=${suggestedCode}`);
+            lobbyTitle.text = 'Attempting to join game..';
+            lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
+        }
+        else {
+            lobbyTitle.text = 'We are connected to the server!\n\nGot a friend?\nSend them your URL to play with them!';
+            lobbyTitle.x = windowWidth / 2 - lobbyTitle.width / 2;
+
+            window.history.pushState(suggestedCode, suggestedCode, `?i=${suggestedCode}`);
+        }
     });
 
     // On Game Join
@@ -245,6 +265,11 @@ function addMessages() {
     // Send input
     sendInput = gameConnection.addTalkBox(5, function (game) { 
         console.log(`Received input?`);
+    });
+
+    // Send join game
+    sendJoinRequest = gameConnection.addTalkBox(7, function (game) { 
+        console.log(`Received join request?`);
     });
 
     // Receive player sync
@@ -671,3 +696,9 @@ window.onresize = function (event) {
     app.view.style.width = w + "px";
     app.view.style.height = h + "px";
 };
+
+var parts = window.location.search.substr(1).split("&");
+for (var i = 0; i < parts.length; i++) {
+    var temp = parts[i].split("=");
+    gameArguments[decodeURIComponent(temp[0])] = decodeURIComponent(temp[1]);
+}
