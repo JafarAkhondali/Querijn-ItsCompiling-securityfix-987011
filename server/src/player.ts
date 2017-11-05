@@ -51,6 +51,9 @@ export class Player {
     }
 
     public send(message: object) {
+        if (this.socket.readyState !== WebSocket.OPEN) 
+            return;
+
         this.socket.send(JSON.stringify(message));
     }
 

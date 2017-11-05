@@ -58,6 +58,15 @@ let healthRight = null;
 let computerLeft = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu1_main.x, s_cpu1_main.y, s_cpu1_main.width, s_cpu1_main.height)));
 let computerRight = PIXI.Sprite.from(new PIXI.Texture(gameSprites, new PIXI.Rectangle(s_cpu2_main.x, s_cpu2_main.y, s_cpu2_main.width, s_cpu2_main.height)));
 
+let codeLeft = null;
+let codeRight = null;
+let codeOffsetLeft = 0;
+let codeOffsetRight = 0;
+let codeRightInterval = null;
+let codingRight = null;
+let sourceCode = [""];
+let getCode = function(offset) { let code = ""; for (var i = 0; i < 10; i++) code += sourceCode[offset + i] + "\n"; return code; }
+
 let lobbyTitle = null;
 let prepareToStartText = null;
 
@@ -89,10 +98,22 @@ function preload() {
     font.onerror = function(e) { console.error(e);};
     font.fontFamily = "xkcd-script";
     assetsRequested++;
+    
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState != 4 || this.status != 200)
+            return;
+
+        sourceCode = this.responseText.split('\n');
+        assetHasLoaded();
+    };
+    assetsRequested++;
 
     // add load assets here
     
     font.src = 'media/xkcd-script.ttf'; // Start loading
+    xhttp.open("GET", "media/source.txt", true);
+    xhttp.send();
 }
 
 function init() {
@@ -150,7 +171,7 @@ function addMessages() {
             fill: '#000',
             align: "center"
         });
-    
+
         prepareToStartText = new PIXI.Text(`Game will start in ${time}..`, style);
         time = parseInt(time);
         prepareToStartText.x = windowWidth / 2 - prepareToStartText.width / 2;
@@ -179,6 +200,14 @@ function addMessages() {
         gameState.started = true;
         removeTimer();
         numberScroller.start();
+        
+        codingRight = function () { 
+            codeOffsetRight++;
+            codeRight.text = getCode(codeOffsetRight);
+
+            codeRightInterval = setTimeout(codingRight, Math.random() * 300 + 50);
+        };
+        codeRightInterval = setTimeout(codingRight, 150);
     });
 
     // Send input
@@ -228,6 +257,42 @@ function showSharedAssets() {
     computerRight.x = windowWidth - s_cpu2_main.width - 120;
     computerRight.y = 320;
     app.stage.addChild(computerRight);
+    
+    codeOffsetLeft = Math.floor(Math.random() * 2000) % sourceCode.length;
+    codeOffsetRight = Math.floor(Math.random() * 2000) % sourceCode.length;
+
+    style = new PIXI.TextStyle({
+        fontFamily: 'xkcd-script',
+        fontSize: 21,
+        fill: '#979797'
+    });
+
+    let getCode = function(offset) { let code = ""; for (var i = 0; i < 10; i++) code += sourceCode[offset + i] + "\n"; return code; }
+    let code = getCode(codeOffsetLeft);
+    codeLeft = new PIXI.Text(code, style);
+    codeLeft.x = 190;
+    codeLeft.y = 400;
+    app.stage.addChild(codeLeft);
+
+    codeLeft.mask = new PIXI.Graphics(); 
+    codeLeft.mask.beginFill(0xFFFFFF, 1);
+    codeLeft.mask.moveTo(190, 400);
+    codeLeft.mask.lineTo(720, 400);
+    codeLeft.mask.lineTo(715, 670);
+    codeLeft.mask.lineTo(190, 670);
+    
+    code = getCode(codeOffsetRight);
+    codeRight = new PIXI.Text(code, style);
+    codeRight.x = 1210;
+    codeRight.y = 400;
+    app.stage.addChild(codeRight);
+
+    codeRight.mask = new PIXI.Graphics(); 
+    codeRight.mask.beginFill(0xFFFFFF, 1);
+    codeRight.mask.moveTo(1210, 400);
+    codeRight.mask.lineTo(1730, 400);
+    codeRight.mask.lineTo(1725, 670);
+    codeRight.mask.lineTo(1210, 670);
 }
 
 function showLobby() {
@@ -298,30 +363,52 @@ function showGame() {
     healthRight.y = healthBarRight.y + 5;
     app.stage.addChild(healthRight);
 
-    compileButton.anchor.x = 0.5;
-    compileButton.anchor.y = 0.5;
-    compileButton.x = windowWidth / 2;
-    compileButton.y = windowHeight - 50;
-    app.stage.addChild(compileButton);
-
-    zeroButton.anchor.x = 0.5;
-    zeroButton.anchor.y = 0.5;
-    zeroButton.x = windowWidth / 2 - compileButton.width / 2 - zeroButton.width / 2;
-    zeroButton.y = windowHeight - 50;
-    app.stage.addChild(zeroButton);
-
-    oneButton.anchor.x = 0.5;
-    oneButton.anchor.y = 0.5;
-    oneButton.x = windowWidth / 2 + compileButton.width / 2 + zeroButton.width / 2;
-    oneButton.y = windowHeight - 50;
-    app.stage.addChild(oneButton);
+    if (window.onMobilePhone) { 
+        // TODO: make a better mobile config
+        compileButton.anchor.x = 0.5;
+        compileButton.anchor.y = 0.5;
+        compileButton.x = windowWidth / 2;
+        compileButton.y = windowHeight - 50;
+        app.stage.addChild(compileButton);
+    
+        zeroButton.anchor.x = 0.5;
+        zeroButton.anchor.y = 0.5;
+        zeroButton.x = windowWidth / 2 - compileButton.width / 2 - zeroButton.width / 2;
+        zeroButton.y = windowHeight - 50;
+        app.stage.addChild(zeroButton);
+    
+        oneButton.anchor.x = 0.5;
+        oneButton.anchor.y = 0.5;
+        oneButton.x = windowWidth / 2 + compileButton.width / 2 + zeroButton.width / 2;
+        oneButton.y = windowHeight - 50;
+        app.stage.addChild(oneButton);
+    }
+    else { 
+        // compileButton.anchor.x = 0.5;
+        // compileButton.anchor.y = 0.5;
+        // compileButton.x = windowWidth / 2;
+        // compileButton.y = windowHeight - 50;
+        // app.stage.addChild(compileButton);
+    
+        // zeroButton.anchor.x = 0.5;
+        // zeroButton.anchor.y = 0.5;
+        // zeroButton.x = windowWidth / 2 - compileButton.width / 2 - zeroButton.width / 2;
+        // zeroButton.y = windowHeight - 50;
+        // app.stage.addChild(zeroButton);
+    
+        // oneButton.anchor.x = 0.5;
+        // oneButton.anchor.y = 0.5;
+        // oneButton.x = windowWidth / 2 + compileButton.width / 2 + zeroButton.width / 2;
+        // oneButton.y = windowHeight - 50;
+        // app.stage.addChild(oneButton);
+    }   
     
     numberScroller.ticker = app.ticker.add(numberScroller.update.bind(numberScroller));
 }
 
 window.onkeydown = function(e) {
 
-    if (waitForUp) return;
+    if (waitForUp || numberScroller.paused) return;
 
     if (e.keyCode == 13 || e.keyCode == 32 /*|| e.keyCode == 116*/) { // enter, space or F5
         e.preventDefault();
@@ -332,7 +419,6 @@ window.onkeydown = function(e) {
         numberScroller.resetSpeed();
         compileButton.gotoAndStop(1);
 
-        
         waitForUp = true;
         if (sendInput) {
             sendInput(InputType.Compile);
@@ -352,6 +438,9 @@ window.onkeydown = function(e) {
         if (sendInput) {
             sendInput(binary == 1 ? InputType.One : InputType.Zero);
         }
+        
+        codeOffsetLeft++;
+        codeLeft.text = getCode(codeOffsetLeft);
 
         if (isCorrectButton) {
             // addCode();
@@ -384,6 +473,11 @@ function hideGame() {
 
     numberScroller.remove();
 
+    if (codeRightInterval) {
+        clearTimeout(codeRightInterval);
+        codeRightInterval = null;
+    }
+
     app.stage.removeChild(healthBorderLeft);
     app.stage.removeChild(healthBorderRight);
     app.stage.removeChild(healthBarLeft); 
@@ -410,8 +504,9 @@ else window.onload = preload;
 window.onresize = function (event) {
 
     let oldAspect = windowWidth / windowHeight;
+    let relativeWidth = window.onMobilePhone ? 0.99 : 0.8;
 
-    let w = Math.min(window.innerWidth * 0.8, 1920);
+    let w = Math.min(window.innerWidth * relativeWidth, 1920);
     let h = w / oldAspect;
     app.view.style.width = w + "px";
     app.view.style.height = h + "px";
