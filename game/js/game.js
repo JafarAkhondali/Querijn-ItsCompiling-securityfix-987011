@@ -5,7 +5,7 @@ let windowHeight = 1080;
 let dartComboCount = 8;
 let numbersOnScreenCount = 8;
 let maxHealth = 64;
-let serverURL = "ws://localhost:3389";
+let serverURL = "ws://thuis.irule.at:3389";
 
 const InputType = {
     Zero: 0,
@@ -126,6 +126,7 @@ for (let i = 0; i < dartComboCount; i++) {
 
 let gameConnection = null;
 let gameToJoin = null;
+let hasAttemptedJoiningGame = false;
 let sendInput = null;
 let waitForUp = false;
 let inviteCode = 0;
@@ -217,6 +218,15 @@ function init() {
 
     addMessages();
 }
+
+function joinGame() {
+    sendJoinRequest(gameToJoin);
+    gameToJoin = 0;
+    hasAttemptedJoiningGame = true;
+
+    lobbyTitle.text = 'Attempting to join game..';
+    lobbyTitle.x = -s_lobby.width +  windowWidth / 2 - lobbyTitle.width / 2;
+}
     
 function addMessages() {
     // On Lobby Join
@@ -226,16 +236,14 @@ function addMessages() {
         hasReceivedInviteCode(suggestedCode);
 
         if (gameToJoin) {
-            sendJoinRequest(gameToJoin);
-            gameToJoin = 0;
-
-            lobbyTitle.text = 'Attempting to join game..';
-            lobbyTitle.x = -s_lobby.width +  windowWidth / 2 - lobbyTitle.width / 2;
+            lobbyTitle.text = 'I see you are trying to join game ' + gameToJoin + '.\nRead the instructions carefully, and press space/enter to go!';
+            lobbyTitle.x = -s_lobby.width + windowWidth / 2 - lobbyTitle.width / 2;
         }
         else {
             window.history.pushState(suggestedCode, suggestedCode, `?i=${suggestedCode}`);
 
-            lobbyTitle.text = 'We are connected to the server!\nGot a friend? Send them your URL to play with them!\n(' + window.location.href + ')';
+            let firstLine = (hasAttemptedJoiningGame) ? "Can't connect to that game!" : "We are connected to the server!";
+            lobbyTitle.text = firstLine + '\nGot a friend? Send them your URL to play with them!\n(' + window.location.href + ')';
             lobbyTitle.x = -s_lobby.width + windowWidth / 2 - lobbyTitle.width / 2;
         }
     });
@@ -546,7 +554,7 @@ function updateAnimations() {
                 
             case PlayerState.Clashing: {
                 let transitionAnimation = 'idle_to_clash';
-                let animation = 'clash';
+                let animation = 'clash_1';
 
                 if (gameState.yourPrevState == PlayerState.Attacking) {
                     transitionAnimation = 'attack_to_clash';
@@ -802,51 +810,56 @@ function showGame() {
     healthRight.y = healthBarRight.y + 5;
     world.addChild(healthRight);
 
-    if (window.onMobilePhone) { 
-        // TODO: make a better mobile config
-        compileButton.anchor.x = 0.5;
-        compileButton.anchor.y = 0.5;
-        compileButton.x = windowWidth / 2;
-        compileButton.y = windowHeight - 50;
-        world.addChild(compileButton);
+    // if (window.onMobilePhone) { 
+    //     // TODO: make a better mobile config
+    //     compileButton.anchor.x = 0.5;
+    //     compileButton.anchor.y = 0.5;
+    //     compileButton.x = windowWidth / 2;
+    //     compileButton.y = windowHeight - 50;
+    //     world.addChild(compileButton);
     
-        zeroButton.anchor.x = 0.5;
-        zeroButton.anchor.y = 0.5;
-        zeroButton.x = windowWidth / 2 - compileButton.width / 2 - zeroButton.width / 2;
-        zeroButton.y = windowHeight - 50;
-        world.addChild(zeroButton);
+    //     zeroButton.anchor.x = 0.5;
+    //     zeroButton.anchor.y = 0.5;
+    //     zeroButton.x = windowWidth / 2 - compileButton.width / 2 - zeroButton.width / 2;
+    //     zeroButton.y = windowHeight - 50;
+    //     world.addChild(zeroButton);
     
-        oneButton.anchor.x = 0.5;
-        oneButton.anchor.y = 0.5;
-        oneButton.x = windowWidth / 2 + compileButton.width / 2 + zeroButton.width / 2;
-        oneButton.y = windowHeight - 50;
-        world.addChild(oneButton);
-    }
-    else { 
-        // compileButton.anchor.x = 0.5;
-        // compileButton.anchor.y = 0.5;
-        // compileButton.x = windowWidth / 2;
-        // compileButton.y = windowHeight - 50;
-        // world.addChild(compileButton);
+    //     oneButton.anchor.x = 0.5;
+    //     oneButton.anchor.y = 0.5;
+    //     oneButton.x = windowWidth / 2 + compileButton.width / 2 + zeroButton.width / 2;
+    //     oneButton.y = windowHeight - 50;
+    //     world.addChild(oneButton);
+    // }
+    // else { 
+    //     compileButton.anchor.x = 0.5;
+    //     compileButton.anchor.y = 0.5;
+    //     compileButton.x = windowWidth / 2;
+    //     compileButton.y = windowHeight - 50;
+    //     world.addChild(compileButton);
     
-        // zeroButton.anchor.x = 0.5;
-        // zeroButton.anchor.y = 0.5;
-        // zeroButton.x = windowWidth / 2 - compileButton.width / 2 - zeroButton.width / 2;
-        // zeroButton.y = windowHeight - 50;
-        // world.addChild(zeroButton);
+    //     zeroButton.anchor.x = 0.5;
+    //     zeroButton.anchor.y = 0.5;
+    //     zeroButton.x = windowWidth / 2 - compileButton.width / 2 - zeroButton.width / 2;
+    //     zeroButton.y = windowHeight - 50;
+    //     world.addChild(zeroButton);
     
-        // oneButton.anchor.x = 0.5;
-        // oneButton.anchor.y = 0.5;
-        // oneButton.x = windowWidth / 2 + compileButton.width / 2 + zeroButton.width / 2;
-        // oneButton.y = windowHeight - 50;
-        // world.addChild(oneButton);
-    }   
+    //     oneButton.anchor.x = 0.5;
+    //     oneButton.anchor.y = 0.5;
+    //     oneButton.x = windowWidth / 2 + compileButton.width / 2 + zeroButton.width / 2;
+    //     oneButton.y = windowHeight - 50;
+    //     world.addChild(oneButton);
+    // }   
     
     numberScroller.ticker = app.ticker.add(numberScroller.update.bind(numberScroller));
 }
 
 window.onkeydown = function(e) {
 
+    if (gameToJoin) {
+        joinGame();
+    }
+
+    console.log(e.keyCode);
     if (waitForUp || numberScroller.paused) return;
 
     if (e.keyCode == 13 || e.keyCode == 32 /*|| e.keyCode == 116*/) { // enter, space or F5
@@ -863,8 +876,21 @@ window.onkeydown = function(e) {
             sendInput(InputType.Compile);
         }
     }
-    else if (e.keyCode == 48 || e.keyCode == 49) { // 0 or 1
-        let binary = e.keyCode - 48;
+    else if (e.keyCode == 45 || e.keyCode == 35 || e.keyCode == 48 || e.keyCode == 49 || e.keyCode == 96 || e.keyCode == 97) { // 0 or 1
+        let binary = 0;
+        switch(e.keyCode) {
+            case 35:
+            case 49:
+            case 49:
+            case 97:
+                binary = 1;
+                break;
+            case 48:
+            case 45:
+            case 96:
+                binary = 0;
+                break;
+        }
 
         if (!gameState.started)
             return;
@@ -901,8 +927,21 @@ window.onkeyup = function(e) {
         
         waitForUp = false;
     }
-    else if (e.keyCode == 48 || e.keyCode == 49) { // 0 or 1
-        let binary = e.keyCode - 48;
+    else if (e.keyCode == 45 || e.keyCode == 35 || e.keyCode == 48 || e.keyCode == 49 || e.keyCode == 96 || e.keyCode == 97) { // 0 or 1
+        let binary = 0;
+        switch(e.keyCode) {
+            case 35:
+            case 49:
+            case 49:
+            case 97:
+                binary = 1;
+                break;
+            case 48:
+            case 45:
+            case 96:
+                binary = 0;
+                break;
+        }
         button[binary].gotoAndStop(0);
 
         waitForUp = false;
