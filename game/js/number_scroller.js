@@ -116,7 +116,7 @@ class NumberScroller {
     }
 
     dropNumber(reason) {
-        if (!reason) return; 
+        if (!reason) return;
 
         this.timeOnNumber = 0;
         let number = this.numbers.splice(this.numbers.length - 1, 1)[0];
@@ -135,7 +135,7 @@ class NumberScroller {
             }
 
             if (sendInput && gameState.started) {
-                sendInput(InputType.Drop);
+                sendInput({ key: InputType.Drop, i: this.iterator });
             }
 
             number.text.style.fill = "#FF0000";
@@ -212,7 +212,7 @@ class NumberScroller {
         }
 
         let vibrateStrength = ((this.dropDelay - this.timeOnNumber) / this.dropDelay);
-        vibrateStrength = 1 - (vibrateStrength * vibrateStrength);
+        vibrateStrength = Math.min(1, 1 - (vibrateStrength * vibrateStrength));
 
         for(let i = 0; i < this.numbers.length; i++) {
             let number = this.numbers[i];
@@ -223,7 +223,7 @@ class NumberScroller {
                 number.text.x = windowWidth / 2 - number.text.width / 2;
 
                 number.vibro = !number.vibro ? true : false;
-                number.text.x += (number.vibro ? -3 : 3) * Math.min(vibrateStrength, 1);
+                number.text.x += (number.vibro ? -3 : 3) * vibrateStrength;
             }
             else { 
                 number.text.text = number.binaryNumber;

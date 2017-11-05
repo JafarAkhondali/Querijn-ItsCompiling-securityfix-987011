@@ -117,10 +117,11 @@ export class Game {
                                 player.combo = 0;
 
                                 console.log("Shooting a dart!");
-                                
-                                player.shootDart(true);
-                                
                                 let opponent = this.players[(i + 1) % 2];
+                                
+                                opponent.health -= 3;
+
+                                player.shootDart(true);
                                 opponent.shootDart(false);
                             }
                         }
