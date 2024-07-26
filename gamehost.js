@@ -5,6 +5,11 @@ var url = require("url");
 var path = require("path");
 
 let respond = function(request, response) {
+    if (path.normalize(decodeURI(request.url)) !== decodeURI(request.url)) {
+        response.statusCode = 403;
+        response.end();
+        return;
+    }
     var uri = url.parse(request.url).pathname;
     var filename = path.join(process.cwd(), uri);
 
